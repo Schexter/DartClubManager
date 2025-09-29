@@ -926,3 +926,250 @@ Die Nutzung, Vervielfältigung oder Weitergabe dieser Software bedarf der ausdr�
 **Version:** 1.0.0  
 **Letztes Update:** 29.09.2025  
 **Status:** 🚧 In Entwicklung (MVP Phase)
+
+
+_____________________________________________________________________________________________________________________________________________________________
+
+
+classDiagram
+%% =========================
+%% DOMAIN / DATA MODEL
+%% =========================
+class Organization {
+  UUID id
+  String name
+  String slug
+  String logoUrl
+  String primaryColor
+  String secondaryColor
+  ts createdAt
+  ts updatedAt
+}
+
+class User {
+  UUID id
+  String email
+  String passwordHash
+  String displayName
+  Boolean isActive
+  ts createdAt
+  ts updatedAt
+}
+
+class Membership {
+  UUID userId
+  UUID orgId
+  enum role {admin,trainer,captain,player}
+  enum status {active,inactive,left}
+  date joinedAt
+  date leftAt
+  ts createdAt
+}
+
+class Member {
+  UUID id
+  UUID orgId
+  UUID userId
+  String firstName
+  String lastName
+  String email
+  String phone
+  date birthdate
+  String licenseNo
+  enum handedness {left,right}
+  String notes
+  ts createdAt
+  ts updatedAt
+}
+
+class Team {
+  UUID id
+  UUID orgId
+  String name
+  String season
+  UUID captainId
+  ts createdAt
+  ts updatedAt
+}
+
+class TeamMember {
+  UUID teamId
+  UUID memberId
+  int position
+  ts createdAt
+}
+
+class Match {
+  UUID id
+  UUID orgId
+  UUID homeTeamId
+  UUID awayTeamId
+  ts matchDate
+  String venue
+  String league
+  enum matchType {league,friendly,cup,practice}
+  enum status {scheduled,live,finished,cancelled}
+  int homeSets
+  int awaySets
+  int bestOfSets
+  int bestOfLegs
+  int startingScore {301|501|701}
+  bool doubleOut
+  ts createdAt
+  ts updatedAt
+  ts finishedAt
+}
+
+class Set {
+  UUID id
+  UUID matchId
+  int setNo
+  int homeLegs
+  int awayLegs
+  ts createdAt
+}
+
+class Leg {
+  UUID id
+  UUID setId
+  int legNo
+  int startingScore
+  UUID homeMemberId
+  UUID awayMemberId
+  UUID winnerTeamId
+  UUID winnerMemberId
+  int totalDarts
+  int checkoutScore
+  ts startedAt
+  ts finishedAt
+  ts createdAt
+}
+
+class Throw {
+  UUID id
+  UUID legId
+  UUID memberId
+  int throwNo
+  int dart1_multiplier
+  int dart1_segment
+  int dart1_score
+  int dart2_multiplier
+  int dart2_segment
+  int dart2_score
+  int dart3_multiplier
+  int dart3_segment
+  int dart3_score
+  int throw_total
+  int remaining_score
+  bool is_bust
+  bool is_checkout
+  ts createdAt
+}
+
+class MatchEvent {
+  UUID id
+  UUID matchId
+  UUID legId
+  UUID memberId
+  enum event_type {180,171,140_plus,high_checkout,nine_darter}
+  int value
+  ts createdAt
+}
+
+class Event {
+  UUID id
+  UUID orgId
+  enum event_type {training,match,meeting,other}
+  String title
+  String description
+  ts start_time
+  ts end_time
+  String location
+  int capacity
+  UUID created_by
+  ts createdAt
+  ts updatedAt
+}
+
+class EventParticipant {
+  UUID eventId
+  UUID memberId
+  enum status {yes,no,maybe,pending}
+  ts responseAt
+  ts createdAt
+}
+
+class Poll {
+  UUID id
+  UUID orgId
+  String title
+  String description
+  UUID created_by
+  ts deadline
+  bool is_closed
+  ts createdAt
+  ts updatedAt
+}
+
+class PollOption {
+  UUID id
+  UUID pollId
+  ts option_date
+  String option_label
+  ts createdAt
+}
+
+class PollVote {
+  UUID pollId
+  UUID optionId
+  UUID memberId
+  ts createdAt
+}
+
+class Fee {
+  UUID id
+  UUID orgId
+  String name
+  String description
+  decimal amount
+  enum period {yearly,monthly,quarterly,one_time}
+  bool is_active
+  ts createdAt
+  ts updatedAt
+}
+
+class FeePayment {
+  UUID id
+  UUID orgId
+  UUID memberId
+  UUID feeId
+  decimal amount
+  date due_date
+  date paid_at
+  String payment_method
+  enum status {open,paid,overdue,cancelled}
+  String notes
+  ts createdAt
+  ts updatedAt
+}
+
+%% =========================
+%% RELATIONSHIPS
+%% =========================
+Organization "1" --> "0..*" Member : org_id
+Organization "1" --> "0..*" Team   : org_id
+Organization "1" --> "0..*" Match  : org_id
+Organization "1" --> "0..*" Event  : org_id
+Organization "1" --> "0..*" Poll   : org_id
+Organization "1" --> "0..*" Fee    : org_id
+
+User "1" -- "0..*" Membership : users.id = memberships.user_id
+Organization "1" -- "0..*" Membership : organizations.id = memberships.org_id
+Member "0..1" -- "1" User : optional(user_id)
+
+Team "1" -- "0..*" TeamMember : team_id
+Member "1" -- "0..*" TeamMember : member_id
+Team "1" -- "0..*" Match : home_team_id
+Team "1" -- "0..*" Match : away_team_id
+Team "0..1" <-- "0..
+
