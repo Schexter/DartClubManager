@@ -4,6 +4,8 @@
 
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://www.oracle.com/java/)
+[![React](https://img.shields.io/badge/React-18.x-blue.svg)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue.svg)](https://www.postgresql.org/)
 [![License](https://img.shields.io/badge/License-Proprietary-red.svg)]()
 
@@ -30,7 +32,7 @@
 
 ## 🎯 Über das Projekt
 
-DartClubManager ist eine moderne, skalierbare Web-Anwendung zur Verwaltung von Dart-Vereinen. Das System wurde entwickelt, um Vereinen aller Größenordnungen eine professionelle Plattform für:
+DartClubManager ist eine moderne, skalierbare **Web-Anwendung** zur Verwaltung von Dart-Vereinen. Das System wurde entwickelt, um Vereinen aller Größenordnungen eine professionelle Plattform für:
 
 - **Mitgliederverwaltung** - Komplette Spielerdaten mit Statistiken
 - **Spielverwaltung** - Liga-, Freundschafts- und Turnierspiele
@@ -44,8 +46,9 @@ DartClubManager ist eine moderne, skalierbare Web-Anwendung zur Verwaltung von D
 - **Multi-Tenancy-fähig**: Ein System, viele Vereine - datentechnisch vollständig isoliert
 - **PDC/WDF-konforme Statistiken**: Professionelle Kennzahlen wie 3-Dart-Average, Checkout-Quote, 180er-Rate
 - **Progressive Web App**: Funktioniert auf Desktop, Tablet und Mobile
-- **Offline-First**: Kritische Funktionen auch ohne Internetverbindung nutzbar
+- **Offline-First**: Kritische Funktionen auch ohne Internetverbindung nutzbar (via IndexedDB)
 - **Skalierbar**: Von 20 bis 2000+ Mitglieder - die Architektur wächst mit
+- **Responsive Design**: Optimiert für alle Bildschirmgrößen
 
 ---
 
@@ -105,7 +108,7 @@ DartClubManager ist eine moderne, skalierbare Web-Anwendung zur Verwaltung von D
 - Video-Integration (Highlight-Reels)
 - KI-gestützte Spieleranalysen
 - Gegnerscouts mit statistischer Auswertung
-- Mobile Apps (iOS/Android native)
+- Native Mobile Apps (iOS/Android via React Native)
 
 ---
 
@@ -128,16 +131,26 @@ DartClubManager ist eine moderne, skalierbare Web-Anwendung zur Verwaltung von D
 | **Mockito** | 5.x | Mocking Framework |
 | **Testcontainers** | 1.19.x | Integration Testing |
 
-### Frontend (geplant)
+### Frontend
 
 | Technologie | Version | Verwendung |
 |-------------|---------|------------|
-| **Flutter** | 3.x | Cross-Platform Framework |
-| **Dart** | 3.x | Programmiersprache |
-| **Riverpod** | 2.x | State Management |
-| **GoRouter** | 13.x | Navigation |
-| **Dio** | 5.x | HTTP Client |
-| **Freezed** | 2.x | Immutable Models |
+| **React** | 18.x | UI Framework |
+| **TypeScript** | 5.x | Programmiersprache (Type Safety) |
+| **Vite** | 5.x | Build Tool & Dev Server |
+| **React Router** | 6.x | Client-Side Routing |
+| **TanStack Query (React Query)** | 5.x | Server State Management |
+| **Zustand** | 4.x | Client State Management |
+| **Tailwind CSS** | 3.x | Utility-First CSS Framework |
+| **shadcn/ui** | latest | UI Component Library |
+| **Axios** | 1.x | HTTP Client |
+| **React Hook Form** | 7.x | Form Handling |
+| **Zod** | 3.x | Schema Validation |
+| **date-fns** | 3.x | Date Utilities |
+| **Recharts** | 2.x | Chart Library |
+| **Vitest** | 1.x | Testing Framework |
+| **Testing Library** | latest | React Testing |
+| **Playwright** | 1.x | E2E Testing |
 
 ### DevOps
 
@@ -148,6 +161,7 @@ DartClubManager ist eine moderne, skalierbare Web-Anwendung zur Verwaltung von D
 | **GitHub Actions** | CI/CD Pipeline |
 | **SonarQube** | Code-Qualität |
 | **Swagger/OpenAPI** | API-Dokumentation |
+| **Nginx** | Reverse Proxy & Static File Serving |
 
 ---
 
@@ -159,12 +173,13 @@ DartClubManager ist eine moderne, skalierbare Web-Anwendung zur Verwaltung von D
 ┌─────────────────────────────────────────────────────────────┐
 │                         Client Layer                         │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │
-│  │   Flutter   │  │     Web     │  │   Mobile    │         │
-│  │   Web App   │  │   Browser   │  │    Apps     │         │
+│  │   React     │  │     Web     │  │   Mobile    │         │
+│  │   Web App   │  │   Browser   │  │  (future)   │         │
+│  │ TypeScript  │  │  (PWA)      │  │             │         │
 │  └─────────────┘  └─────────────┘  └─────────────┘         │
 └─────────────────────────────────────────────────────────────┘
                             │
-                            ▼ HTTPS/REST
+                            ▼ HTTPS/REST + JSON
 ┌─────────────────────────────────────────────────────────────┐
 │                      API Gateway Layer                       │
 │                    (Spring Boot Backend)                     │
@@ -204,115 +219,187 @@ DartClubManager ist eine moderne, skalierbare Web-Anwendung zur Verwaltung von D
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### Schichtenarchitektur (Layered Architecture)
+### Frontend-Architektur (React)
 
 ```
 ┌───────────────────────────────────────────────────────┐
-│                  Controller Layer                      │
-│  • REST Endpoints                                      │
-│  • Request Validation                                  │
-│  • DTO Mapping (Entity <-> DTO)                       │
+│                    App Entry Point                     │
+│                    (main.tsx)                          │
 └───────────────────────────────────────────────────────┘
                         │
                         ▼
 ┌───────────────────────────────────────────────────────┐
-│                   Service Layer                        │
-│  • Business Logic                                      │
-│  • Transaction Management                              │
-│  • Complex Validations                                 │
-│  • Statistics Calculations                             │
+│                   Router Layer                         │
+│              (React Router v6)                         │
+│  /login  /dashboard  /matches  /players  /stats       │
 └───────────────────────────────────────────────────────┘
                         │
                         ▼
 ┌───────────────────────────────────────────────────────┐
-│                  Repository Layer                      │
-│  • Data Access (JPA)                                   │
-│  • Custom Queries (JPQL)                              │
-│  • Native Queries (Complex Stats)                     │
+│                    Layout Layer                        │
+│  • Authenticated Layout (with Nav/Sidebar)            │
+│  • Public Layout (Login/Register)                     │
 └───────────────────────────────────────────────────────┘
                         │
                         ▼
 ┌───────────────────────────────────────────────────────┐
-│                    Entity Layer                        │
-│  • Database Entities                                   │
-│  • Relationships (@OneToMany, etc.)                   │
-│  • Multi-Tenancy (org_id in allen Entitäten)         │
+│                    Feature Modules                     │
+│  ├── auth/      (Login, Register, Logout)            │
+│  ├── dashboard/ (Overview, Quick Actions)            │
+│  ├── players/   (List, Detail, Form, Stats)          │
+│  ├── matches/   (List, Detail, Live Scoring)         │
+│  ├── teams/     (List, Detail, Lineup)               │
+│  ├── events/    (Calendar, Training)                 │
+│  └── stats/     (Analytics, Charts)                  │
+└───────────────────────────────────────────────────────┘
+                        │
+                        ▼
+┌───────────────────────────────────────────────────────┐
+│                 State Management                       │
+│  • Zustand (Global State: auth, org)                 │
+│  • React Query (Server State: API Caching)           │
+│  • React Context (Theme, Locale)                     │
+└───────────────────────────────────────────────────────┘
+                        │
+                        ▼
+┌───────────────────────────────────────────────────────┐
+│                   API Layer                            │
+│  • Axios Instance (with Interceptors)                │
+│  • JWT Token Refresh                                 │
+│  • Error Handling                                     │
 └───────────────────────────────────────────────────────┘
 ```
 
-### Package-Struktur
+### Frontend Folder Structure
 
 ```
-com.dartclub/
-├── config/                      # Konfigurationsklassen
-│   ├── SecurityConfig.java      # Spring Security Setup
-│   ├── CorsConfig.java          # CORS-Policies
-│   ├── JwtConfig.java           # JWT-Konfiguration
-│   └── OpenApiConfig.java       # Swagger-Setup
+frontend/
+├── public/                     # Static Assets
+│   ├── favicon.ico
+│   └── manifest.json
 │
-├── controller/                  # REST-Controller
-│   ├── AuthController.java
-│   ├── PlayerController.java
-│   ├── MatchController.java
-│   ├── TeamController.java
-│   ├── TrainingController.java
-│   └── StatisticsController.java
-│
-├── service/                     # Business Logic
-│   ├── AuthService.java
-│   ├── PlayerService.java
-│   ├── MatchService.java
-│   ├── TeamService.java
-│   ├── StatisticsService.java
-│   └── NotificationService.java
-│
-├── repository/                  # Data Access Layer
-│   ├── UserRepository.java
-│   ├── PlayerRepository.java
-│   ├── MatchRepository.java
-│   ├── ThrowRepository.java
-│   └── TeamRepository.java
-│
-├── model/
-│   ├── entity/                 # JPA Entities
-│   │   ├── User.java
-│   │   ├── Organization.java
-│   │   ├── Player.java
-│   │   ├── Match.java
-│   │   ├── Throw.java
-│   │   └── Team.java
+├── src/
+│   ├── main.tsx               # Entry Point
+│   ├── App.tsx                # Root Component
+│   ├── vite-env.d.ts          # Vite Type Declarations
 │   │
-│   ├── dto/                    # Data Transfer Objects
-│   │   ├── request/
-│   │   │   ├── LoginRequest.java
-│   │   │   ├── CreatePlayerRequest.java
-│   │   │   └── MatchResultRequest.java
-│   │   └── response/
-│   │       ├── PlayerResponse.java
-│   │       ├── MatchResponse.java
-│   │       └── StatisticsResponse.java
+│   ├── assets/                # Images, Icons, Fonts
+│   │   ├── images/
+│   │   ├── icons/
+│   │   └── fonts/
 │   │
-│   └── enums/                  # Enumerations
-│       ├── Role.java
-│       ├── MatchType.java
-│       └── GameFormat.java
+│   ├── components/            # Shared Components
+│   │   ├── ui/               # shadcn/ui Components
+│   │   │   ├── button.tsx
+│   │   │   ├── card.tsx
+│   │   │   ├── input.tsx
+│   │   │   └── ...
+│   │   ├── layout/
+│   │   │   ├── Header.tsx
+│   │   │   ├── Sidebar.tsx
+│   │   │   └── Footer.tsx
+│   │   └── common/
+│   │       ├── LoadingSpinner.tsx
+│   │       ├── ErrorBoundary.tsx
+│   │       └── ConfirmDialog.tsx
+│   │
+│   ├── features/              # Feature-Based Modules
+│   │   ├── auth/
+│   │   │   ├── components/
+│   │   │   │   ├── LoginForm.tsx
+│   │   │   │   └── RegisterForm.tsx
+│   │   │   ├── hooks/
+│   │   │   │   ├── useAuth.ts
+│   │   │   │   └── useLogin.ts
+│   │   │   ├── api/
+│   │   │   │   └── authApi.ts
+│   │   │   ├── types/
+│   │   │   │   └── auth.types.ts
+│   │   │   └── stores/
+│   │   │       └── authStore.ts
+│   │   │
+│   │   ├── players/
+│   │   │   ├── components/
+│   │   │   │   ├── PlayerList.tsx
+│   │   │   │   ├── PlayerCard.tsx
+│   │   │   │   ├── PlayerForm.tsx
+│   │   │   │   └── PlayerStats.tsx
+│   │   │   ├── hooks/
+│   │   │   │   ├── usePlayers.ts
+│   │   │   │   └── usePlayerStats.ts
+│   │   │   ├── api/
+│   │   │   │   └── playersApi.ts
+│   │   │   └── types/
+│   │   │       └── player.types.ts
+│   │   │
+│   │   ├── matches/
+│   │   │   ├── components/
+│   │   │   │   ├── MatchList.tsx
+│   │   │   │   ├── MatchCard.tsx
+│   │   │   │   ├── MatchDetail.tsx
+│   │   │   │   ├── LiveScoring.tsx
+│   │   │   │   └── ScoreBoard.tsx
+│   │   │   ├── hooks/
+│   │   │   ├── api/
+│   │   │   └── types/
+│   │   │
+│   │   ├── teams/
+│   │   │   ├── components/
+│   │   │   ├── hooks/
+│   │   │   ├── api/
+│   │   │   └── types/
+│   │   │
+│   │   ├── events/
+│   │   │   ├── components/
+│   │   │   ├── hooks/
+│   │   │   ├── api/
+│   │   │   └── types/
+│   │   │
+│   │   └── stats/
+│   │       ├── components/
+│   │       ├── hooks/
+│   │       ├── api/
+│   │       └── types/
+│   │
+│   ├── lib/                   # Core Utilities
+│   │   ├── api/
+│   │   │   ├── axios.ts      # Axios Instance
+│   │   │   └── queryClient.ts # React Query Setup
+│   │   ├── utils/
+│   │   │   ├── cn.ts         # className utility
+│   │   │   ├── format.ts     # Formatters
+│   │   │   └── validation.ts # Validators
+│   │   └── constants/
+│   │       ├── routes.ts
+│   │       └── config.ts
+│   │
+│   ├── hooks/                 # Global Custom Hooks
+│   │   ├── useDebounce.ts
+│   │   ├── useLocalStorage.ts
+│   │   └── useMediaQuery.ts
+│   │
+│   ├── types/                 # Global Types
+│   │   ├── api.types.ts
+│   │   └── common.types.ts
+│   │
+│   ├── styles/                # Global Styles
+│   │   ├── globals.css
+│   │   └── tailwind.css
+│   │
+│   └── router/                # Routing Configuration
+│       ├── index.tsx
+│       ├── ProtectedRoute.tsx
+│       └── routes.ts
 │
-├── security/                   # Security Components
-│   ├── JwtTokenProvider.java
-│   ├── JwtAuthenticationFilter.java
-│   ├── CustomUserDetailsService.java
-│   └── TenantContext.java      # Thread-local org_id Storage
-│
-├── exception/                  # Custom Exceptions
-│   ├── GlobalExceptionHandler.java
-│   ├── ResourceNotFoundException.java
-│   ├── UnauthorizedException.java
-│   └── ValidationException.java
-│
-└── util/                       # Helper Classes
-    ├── StatisticsCalculator.java
-    ├── PdfGenerator.java
-    └── DateUtils.java
+├── .env                       # Environment Variables
+├── .env.example
+├── .eslintrc.json            # ESLint Config
+├── .prettierrc               # Prettier Config
+├── tsconfig.json             # TypeScript Config
+├── vite.config.ts            # Vite Config
+├── tailwind.config.ts        # Tailwind Config
+├── postcss.config.js         # PostCSS Config
+└── package.json              # Dependencies
 ```
 
 ---
@@ -322,10 +409,10 @@ com.dartclub/
 ### Voraussetzungen
 
 - **Java Development Kit (JDK)** 21 oder höher
+- **Node.js** 20+ & **npm** 10+
 - **PostgreSQL** 16 oder höher
 - **Docker** & **Docker Compose** (empfohlen für lokale Entwicklung)
 - **Git**
-- **IntelliJ IDEA** (empfohlen) oder andere Java IDE
 
 ### 1. Repository klonen
 
@@ -345,49 +432,51 @@ Das startet PostgreSQL auf Port 5432 mit folgenden Credentials:
 - **User:** `dartclub`
 - **Password:** `dartclub_dev_password`
 
-### 3. Dependencies installieren
+### 3. Backend Installation
 
 ```bash
+cd backend
 ./gradlew build -x test
 ```
 
-### 4. Datenbank-Migrationen ausführen
-
-Flyway führt die Migrationen automatisch beim ersten Start aus. Alternativ manuell:
-
-```bash
-./gradlew flywayMigrate
-```
-
-### 5. Anwendung starten
+### 4. Backend starten
 
 ```bash
 ./gradlew bootRun
 ```
 
-Die Anwendung läuft nun auf: **http://localhost:8080**
+Backend läuft auf: **http://localhost:8080**
 
-### 6. Health-Check
+### 5. Frontend Installation
 
+```bash
+cd frontend
+npm install
+```
+
+### 6. Frontend starten
+
+```bash
+npm run dev
+```
+
+Frontend läuft auf: **http://localhost:5173**
+
+### 7. Health-Check
+
+**Backend:**
 ```bash
 curl http://localhost:8080/api/health
 ```
 
-Erwartete Antwort:
-```json
-{
-  "status": "UP",
-  "message": "DartClubManager Backend is running!"
-}
-```
+**Frontend:**
+Öffne Browser: http://localhost:5173
 
 ---
 
 ## ⚙️ Konfiguration
 
-### application.yml
-
-Die Hauptkonfiguration liegt in `src/main/resources/application.yml`:
+### Backend (application.yml)
 
 ```yaml
 spring:
@@ -418,20 +507,24 @@ jwt:
   expiration: 86400000  # 24 Stunden
 
 cors:
-  allowed-origins: http://localhost:3000,http://localhost:8080
+  allowed-origins: http://localhost:5173,http://localhost:8080
   allowed-methods: GET,POST,PUT,DELETE,OPTIONS
   allowed-headers: "*"
 ```
 
-### Umgebungsvariablen
+### Frontend (.env)
 
-Für die Produktion sollten sensitive Daten über Umgebungsvariablen gesetzt werden:
+```env
+# API Configuration
+VITE_API_BASE_URL=http://localhost:8080/api
+VITE_API_TIMEOUT=30000
 
-```bash
-export JWT_SECRET="your-super-secret-jwt-key-min-256-bits"
-export DB_URL="jdbc:postgresql://prod-db:5432/dartclub"
-export DB_USERNAME="dartclub_prod"
-export DB_PASSWORD="secure-production-password"
+# Environment
+VITE_NODE_ENV=development
+
+# Feature Flags
+VITE_ENABLE_LIVE_SCORING=true
+VITE_ENABLE_ANALYTICS=false
 ```
 
 ---
@@ -471,79 +564,91 @@ POST   /api/matches/{id}/throws  # Wurf erfassen (Live-Scoring)
 POST   /api/matches/{id}/finalize # Spiel abschließen
 ```
 
-#### Teams
+### Frontend-Komponenten Beispiele
 
-```http
-GET    /api/teams              # Alle Teams
-POST   /api/teams              # Neues Team erstellen
-PUT    /api/teams/{id}         # Team aktualisieren
-POST   /api/teams/{id}/members # Spieler zu Team hinzufügen
-```
+#### Login-Komponente
 
-#### Training
+```typescript
+// src/features/auth/components/LoginForm.tsx
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useAuth } from '../hooks/useAuth';
 
-```http
-GET    /api/trainings          # Alle Trainings
-POST   /api/trainings          # Training erstellen
-POST   /api/trainings/{id}/attend  # Teilnahme bestätigen
-```
+const loginSchema = z.object({
+  email: z.string().email('Ungültige E-Mail-Adresse'),
+  password: z.string().min(8, 'Passwort muss mindestens 8 Zeichen haben'),
+});
 
-### Beispiel-Requests
+type LoginFormData = z.infer<typeof loginSchema>;
 
-#### 1. Registrierung
+export function LoginForm() {
+  const { login, isLoading } = useAuth();
+  
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+  });
 
-```bash
-curl -X POST http://localhost:8080/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "max.mustermann",
-    "email": "max@dartclub.de",
-    "password": "SecurePass123!",
-    "organizationName": "Dart Club München"
-  }'
-```
+  const onSubmit = async (data: LoginFormData) => {
+    await login(data.email, data.password);
+  };
 
-#### 2. Login
-
-```bash
-curl -X POST http://localhost:8080/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "max.mustermann",
-    "password": "SecurePass123!"
-  }'
-```
-
-Response:
-```json
-{
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "type": "Bearer",
-  "expiresIn": 86400000,
-  "user": {
-    "id": 1,
-    "username": "max.mustermann",
-    "email": "max@dartclub.de",
-    "role": "ADMIN",
-    "organizationId": 1
-  }
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <div>
+        <Input
+          type="email"
+          placeholder="E-Mail"
+          {...register('email')}
+          error={errors.email?.message}
+        />
+      </div>
+      
+      <div>
+        <Input
+          type="password"
+          placeholder="Passwort"
+          {...register('password')}
+          error={errors.password?.message}
+        />
+      </div>
+      
+      <Button type="submit" fullWidth loading={isLoading}>
+        Anmelden
+      </Button>
+    </form>
+  );
 }
 ```
 
-#### 3. Spieler anlegen (mit JWT Token)
+#### Player-Liste
 
-```bash
-curl -X POST http://localhost:8080/api/players \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -d '{
-    "firstName": "Michael",
-    "lastName": "van Gerwen",
-    "nickname": "Mighty Mike",
-    "email": "mvg@example.com",
-    "dateOfBirth": "1989-04-25",
-    "teamId": 1
-  }'
+```typescript
+// src/features/players/components/PlayerList.tsx
+import { usePlayers } from '../hooks/usePlayers';
+import { PlayerCard } from './PlayerCard';
+import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+
+export function PlayerList() {
+  const { data: players, isLoading, error } = usePlayers();
+
+  if (isLoading) return <LoadingSpinner />;
+  if (error) return <div>Fehler beim Laden der Spieler</div>;
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {players?.map((player) => (
+        <PlayerCard key={player.id} player={player} />
+      ))}
+    </div>
+  );
+}
 ```
 
 ---
@@ -552,243 +657,150 @@ curl -X POST http://localhost:8080/api/players \
 
 ### Lokale Entwicklungsumgebung
 
-1. **IDE Setup (IntelliJ IDEA)**
-   - Öffne das Projekt in IntelliJ
-   - IDE erkennt automatisch Gradle und lädt Dependencies
-   - Aktiviere Lombok Plugin: `Settings → Plugins → Lombok`
-   - Enable Annotation Processing: `Settings → Build → Compiler → Annotation Processors`
+#### Backend (IntelliJ IDEA)
+1. Öffne das Projekt in IntelliJ
+2. IDE erkennt automatisch Gradle und lädt Dependencies
+3. Aktiviere Lombok Plugin
+4. Enable Annotation Processing
 
-2. **Docker Compose für Services**
-
-```bash
-docker-compose up -d
-```
-
-Startet:
-- PostgreSQL (Port 5432)
-- pgAdmin (Port 5050) - Web-Interface für DB
-- Redis (Port 6379) - für Caching/Sessions
-
-3. **Hot Reload aktivieren**
-
-Spring Boot DevTools ist bereits eingebunden. Änderungen am Code werden automatisch neu geladen.
+#### Frontend (VS Code - empfohlen)
+1. Öffne den `frontend/` Ordner in VS Code
+2. Installiere empfohlene Extensions:
+   - ESLint
+   - Prettier
+   - Tailwind CSS IntelliSense
+   - TypeScript Vue Plugin (Volar)
+3. Run `npm install`
+4. Run `npm run dev`
 
 ### Code-Style
 
-Wir folgen den **Google Java Style Guidelines** mit kleinen Anpassungen:
+#### TypeScript/React
+- **ESLint + Prettier** für Code-Formatting
+- **Airbnb Style Guide** als Basis
+- **Functional Components** mit Hooks
+- **TypeScript Strict Mode** aktiviert
 
-- **Indentation:** 4 Spaces
-- **Line Length:** Max. 120 Zeichen
-- **Imports:** Keine Wildcards, alphabetisch sortiert
-- **Kommentare:** JavaDoc für alle public Methoden
+```typescript
+// ✅ GOOD
+interface PlayerProps {
+  player: Player;
+  onEdit: (id: string) => void;
+}
 
-```java
-/**
- * Berechnet die 3-Dart-Average eines Spielers für ein bestimmtes Spiel.
- *
- * @param playerId die ID des Spielers
- * @param matchId die ID des Spiels
- * @return die berechnete 3-Dart-Average
- * @throws ResourceNotFoundException wenn Spieler oder Spiel nicht gefunden
- */
-public double calculateThreeDartAverage(Long playerId, Long matchId) {
-    // Implementation
+export function PlayerCard({ player, onEdit }: PlayerProps) {
+  return (
+    <div className="rounded-lg border p-4">
+      <h3 className="text-lg font-semibold">{player.name}</h3>
+      <button onClick={() => onEdit(player.id)}>Edit</button>
+    </div>
+  );
+}
+
+// ❌ BAD (No Types)
+export function PlayerCard({ player, onEdit }) {
+  return <div>...</div>;
 }
 ```
 
-### Database Migrations
-
-Neue Datenbank-Änderungen werden über **Flyway** versioniert:
-
-1. Erstelle neue Migration in `src/main/resources/db/migration/`
-2. Naming-Convention: `V{version}__{description}.sql`
-   - Beispiel: `V2__add_throws_table.sql`
-3. Migrations werden automatisch beim Start ausgeführt
-
-**Beispiel-Migration:**
-
-```sql
--- V2__add_throws_table.sql
-CREATE TABLE throws (
-    id BIGSERIAL PRIMARY KEY,
-    match_id BIGINT NOT NULL REFERENCES matches(id),
-    player_id BIGINT NOT NULL REFERENCES players(id),
-    org_id BIGINT NOT NULL REFERENCES organizations(id),
-    leg_number INTEGER NOT NULL,
-    throw_number INTEGER NOT NULL,
-    score INTEGER NOT NULL,
-    multiplier INTEGER NOT NULL CHECK (multiplier IN (1, 2, 3)),
-    is_double BOOLEAN DEFAULT FALSE,
-    is_triple BOOLEAN DEFAULT FALSE,
-    remaining_score INTEGER NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX idx_throws_match ON throws(match_id);
-CREATE INDEX idx_throws_player ON throws(player_id);
-CREATE INDEX idx_throws_org ON throws(org_id);
-```
-
-### Branch-Strategie
-
-Wir verwenden **Git Flow**:
-
-- `main` - Produktions-Code
-- `develop` - Entwicklungs-Branch
-- `feature/xyz` - Feature-Branches
-- `bugfix/xyz` - Bugfix-Branches
-- `release/x.x.x` - Release-Branches
-
-**Feature-Workflow:**
+### Git Workflow
 
 ```bash
 # Feature-Branch erstellen
 git checkout develop
 git pull
-git checkout -b feature/live-scoring
+git checkout -b feature/live-scoring-ui
 
 # Entwickeln und committen
 git add .
-git commit -m "feat: implement live-scoring throw recording"
+git commit -m "feat: add live scoring UI components"
 
 # Push und Pull Request erstellen
-git push origin feature/live-scoring
+git push origin feature/live-scoring-ui
 ```
 
 ### Commit-Conventions
 
-Wir folgen **Conventional Commits**:
-
-- `feat:` - Neue Features
-- `fix:` - Bugfixes
-- `docs:` - Dokumentation
-- `style:` - Code-Formatierung
-- `refactor:` - Code-Refactoring
-- `test:` - Tests hinzufügen/ändern
-- `chore:` - Build-Prozess, Dependencies
-
----
-
-## 📚 API-Dokumentation
-
-Die API-Dokumentation wird automatisch über **Swagger/OpenAPI** generiert.
-
-**Zugriff:** http://localhost:8080/swagger-ui.html
-
-**OpenAPI JSON:** http://localhost:8080/v3/api-docs
+```
+feat: neue Features
+fix: Bugfixes
+docs: Dokumentation
+style: Code-Formatierung
+refactor: Code-Refactoring
+test: Tests hinzufügen/ändern
+chore: Build-Prozess, Dependencies
+```
 
 ---
 
 ## 🧪 Testing
 
-### Test-Pyramide
+### Frontend Tests
 
-```
-         /\
-        /  \       E2E Tests (wenige)
-       /────\
-      /      \     Integration Tests (moderate)
-     /────────\
-    /          \   Unit Tests (viele)
-   /────────────\
+```bash
+# Unit Tests (Vitest)
+npm run test
+
+# E2E Tests (Playwright)
+npm run test:e2e
+
+# Coverage Report
+npm run test:coverage
 ```
 
-### Tests ausführen
+#### Unit Test Beispiel
+
+```typescript
+// src/features/players/components/PlayerCard.test.tsx
+import { render, screen } from '@testing-library/react';
+import { PlayerCard } from './PlayerCard';
+
+describe('PlayerCard', () => {
+  it('should render player name', () => {
+    const player = {
+      id: '1',
+      firstName: 'Michael',
+      lastName: 'van Gerwen',
+    };
+
+    render(<PlayerCard player={player} />);
+    
+    expect(screen.getByText('Michael van Gerwen')).toBeInTheDocument();
+  });
+});
+```
+
+### Backend Tests
 
 ```bash
 # Alle Tests
 ./gradlew test
 
-# Nur Unit Tests
-./gradlew test --tests *Test
-
-# Nur Integration Tests
-./gradlew test --tests *IT
-
-# Mit Coverage Report
+# Coverage Report
 ./gradlew test jacocoTestReport
-```
-
-Coverage-Report: `build/reports/jacoco/test/html/index.html`
-
-### Beispiel Unit Test
-
-```java
-@ExtendWith(MockitoExtension.class)
-class StatisticsServiceTest {
-
-    @Mock
-    private ThrowRepository throwRepository;
-
-    @InjectMocks
-    private StatisticsService statisticsService;
-
-    @Test
-    void calculateThreeDartAverage_shouldReturnCorrectAverage() {
-        // Given
-        Long playerId = 1L;
-        Long matchId = 1L;
-        List<Throw> throws = Arrays.asList(
-            createThrow(60, 1),
-            createThrow(60, 2),
-            createThrow(60, 3)
-        );
-        
-        when(throwRepository.findByPlayerIdAndMatchId(playerId, matchId))
-            .thenReturn(throws);
-
-        // When
-        double average = statisticsService.calculateThreeDartAverage(playerId, matchId);
-
-        // Then
-        assertEquals(60.0, average, 0.01);
-    }
-}
-```
-
-### Integration Test mit Testcontainers
-
-```java
-@SpringBootTest
-@Testcontainers
-class PlayerControllerIT {
-
-    @Container
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16")
-        .withDatabaseName("testdb")
-        .withUsername("test")
-        .withPassword("test");
-
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Test
-    void createPlayer_shouldReturnCreatedPlayer() throws Exception {
-        mockMvc.perform(post("/api/players")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                    {
-                        "firstName": "Michael",
-                        "lastName": "van Gerwen"
-                    }
-                    """))
-            .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.firstName").value("Michael"));
-    }
-}
 ```
 
 ---
 
 ## 🚢 Deployment
 
+### Frontend Build
+
+```bash
+cd frontend
+npm run build
+```
+
+Erstellt optimierte Production-Dateien in `frontend/dist/`
+
 ### Docker Build
 
 ```bash
-# Docker Image bauen
-./gradlew bootBuildImage
+# Backend
+docker build -t dartclub-backend:latest ./backend
 
-# Image läuft nun als: dartclub-backend:latest
+# Frontend
+docker build -t dartclub-frontend:latest ./frontend
 ```
 
 ### Docker Compose (Production)
@@ -805,100 +817,62 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
 
   backend:
     image: dartclub-backend:latest
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/dartclub
-      SPRING_DATASOURCE_USERNAME: dartclub
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
     ports:
       - "8080:8080"
     depends_on:
       - postgres
 
+  frontend:
+    image: dartclub-frontend:latest
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
 volumes:
   postgres_data:
 ```
-
-### Deployment auf Cloud
-
-**Unterstützte Plattformen:**
-- AWS (Elastic Beanstalk, ECS)
-- Azure (App Service, Container Instances)
-- Google Cloud (Cloud Run, GKE)
-- Heroku
-- DigitalOcean App Platform
 
 ---
 
 ## 🗺️ Roadmap
 
-### Sprint 0: Setup & Foundation (Woche 1-2) ✅
-- [x] Projekt-Setup (Spring Boot, PostgreSQL)
-- [x] Docker-Umgebung
-- [x] Git-Repository
-- [x] CI/CD Pipeline (GitHub Actions)
+### Sprint 1-7: MVP Phase (16 Wochen)
+- [x] Sprint 0: Setup & Architektur
+- [ ] Sprint 1: Auth & Core
+- [ ] Sprint 2: Spielerverwaltung
+- [ ] Sprint 3: Spielverwaltung
+- [ ] Sprint 4: Live-Scoring
+- [ ] Sprint 5: Statistiken
+- [ ] Sprint 6: Training & Kalender
+- [ ] Sprint 7: Polish & Testing
 
-### Sprint 1: Auth & Core (Woche 3-4) 🔄
-- [ ] JWT-Authentifizierung
-- [ ] User & Organization Entities
-- [ ] Multi-Tenancy Setup
-- [ ] RBAC (Role-Based Access Control)
+### Phase 2: Advanced Features (Monat 5-8)
+- Erweiterte Statistiken
+- Team-Chat
+- Mobile-Optimierung
+- Multi-Language
 
-### Sprint 2: Spielerverwaltung (Woche 5-6)
-- [ ] Player CRUD
-- [ ] Team-Verwaltung
-- [ ] CSV-Import
-- [ ] Avatar-Upload
-
-### Sprint 3: Spielverwaltung Basic (Woche 7-8)
-- [ ] Match CRUD
-- [ ] Mannschaftsaufstellung
-- [ ] Einfache Ergebniserfassung
-- [ ] PDF-Spielberichte
-
-### Sprint 4: Live-Scoring (Woche 9-11)
-- [ ] Throw-Recording
-- [ ] Bust-Detection
-- [ ] Checkout-Recognition
-- [ ] Realtime-Updates
-
-### Sprint 5: Statistiken (Woche 12-13)
-- [ ] 3-Dart-Average
-- [ ] Checkout-Quote
-- [ ] Formkurve
-- [ ] Vergleichsgrafiken
-
-### Sprint 6: Training & Kalender (Woche 14-15)
-- [ ] Training CRUD
-- [ ] Teilnehmerverwaltung
-- [ ] Push-Benachrichtigungen
-
-### Sprint 7: Polish & Testing (Woche 16)
-- [ ] Bug-Fixes
-- [ ] Performance-Optimierung
-- [ ] Dokumentation vervollständigen
-- [ ] Deployment auf Staging
+### Phase 3: Scale (Monat 9-12)
+- Premium-Features
+- API für Drittanbieter
+- Native Mobile Apps (React Native)
 
 ---
 
 ## 👥 Team
 
 **Entwickler-Team:**
-- **Backend-Team** (2 Entwickler) - Spring Boot, PostgreSQL, REST APIs
-- **Frontend-Team** (2 Entwickler) - Flutter, Dart, UI/UX
+- **Backend** (2 Entwickler) - Spring Boot, PostgreSQL, REST APIs
+- **Frontend** (2 Entwickler) - React, TypeScript, UI/UX
 - **DevOps** (1 Entwickler) - Docker, CI/CD, Deployment
 - **Project Owner/Scrum Master** (1 Person) - Koordination, Testing, Dokumentation
-
-**Scrum-Rhythmus:**
-- **Daily Standups:** 15 Minuten (täglich)
-- **Sprint Planning:** Jeden zweiten Montag
-- **Sprint Review:** Jeden zweiten Freitag
-- **Sprint Retrospektive:** Nach jedem Sprint
 
 ---
 
@@ -908,9 +882,7 @@ Dieses Projekt ist proprietäre Software.
 
 **Erstellt von Hans Hahn - Alle Rechte vorbehalten**
 
-© 2025 DartClubManager. Alle Rechte vorbehalten. 
-
-Die Nutzung, Vervielfältigung oder Weitergabe dieser Software bedarf der ausdrücklichen schriftlichen Genehmigung des Urhebers.
+© 2025 DartClubManager. Alle Rechte vorbehalten.
 
 ---
 
@@ -927,249 +899,4 @@ Die Nutzung, Vervielfältigung oder Weitergabe dieser Software bedarf der ausdr�
 **Letztes Update:** 29.09.2025  
 **Status:** 🚧 In Entwicklung (MVP Phase)
 
-
-_____________________________________________________________________________________________________________________________________________________________
-
-
-classDiagram
-%% =========================
-%% DOMAIN / DATA MODEL
-%% =========================
-class Organization {
-  UUID id
-  String name
-  String slug
-  String logoUrl
-  String primaryColor
-  String secondaryColor
-  ts createdAt
-  ts updatedAt
-}
-
-class User {
-  UUID id
-  String email
-  String passwordHash
-  String displayName
-  Boolean isActive
-  ts createdAt
-  ts updatedAt
-}
-
-class Membership {
-  UUID userId
-  UUID orgId
-  enum role {admin,trainer,captain,player}
-  enum status {active,inactive,left}
-  date joinedAt
-  date leftAt
-  ts createdAt
-}
-
-class Member {
-  UUID id
-  UUID orgId
-  UUID userId
-  String firstName
-  String lastName
-  String email
-  String phone
-  date birthdate
-  String licenseNo
-  enum handedness {left,right}
-  String notes
-  ts createdAt
-  ts updatedAt
-}
-
-class Team {
-  UUID id
-  UUID orgId
-  String name
-  String season
-  UUID captainId
-  ts createdAt
-  ts updatedAt
-}
-
-class TeamMember {
-  UUID teamId
-  UUID memberId
-  int position
-  ts createdAt
-}
-
-class Match {
-  UUID id
-  UUID orgId
-  UUID homeTeamId
-  UUID awayTeamId
-  ts matchDate
-  String venue
-  String league
-  enum matchType {league,friendly,cup,practice}
-  enum status {scheduled,live,finished,cancelled}
-  int homeSets
-  int awaySets
-  int bestOfSets
-  int bestOfLegs
-  int startingScore {301|501|701}
-  bool doubleOut
-  ts createdAt
-  ts updatedAt
-  ts finishedAt
-}
-
-class Set {
-  UUID id
-  UUID matchId
-  int setNo
-  int homeLegs
-  int awayLegs
-  ts createdAt
-}
-
-class Leg {
-  UUID id
-  UUID setId
-  int legNo
-  int startingScore
-  UUID homeMemberId
-  UUID awayMemberId
-  UUID winnerTeamId
-  UUID winnerMemberId
-  int totalDarts
-  int checkoutScore
-  ts startedAt
-  ts finishedAt
-  ts createdAt
-}
-
-class Throw {
-  UUID id
-  UUID legId
-  UUID memberId
-  int throwNo
-  int dart1_multiplier
-  int dart1_segment
-  int dart1_score
-  int dart2_multiplier
-  int dart2_segment
-  int dart2_score
-  int dart3_multiplier
-  int dart3_segment
-  int dart3_score
-  int throw_total
-  int remaining_score
-  bool is_bust
-  bool is_checkout
-  ts createdAt
-}
-
-class MatchEvent {
-  UUID id
-  UUID matchId
-  UUID legId
-  UUID memberId
-  enum event_type {180,171,140_plus,high_checkout,nine_darter}
-  int value
-  ts createdAt
-}
-
-class Event {
-  UUID id
-  UUID orgId
-  enum event_type {training,match,meeting,other}
-  String title
-  String description
-  ts start_time
-  ts end_time
-  String location
-  int capacity
-  UUID created_by
-  ts createdAt
-  ts updatedAt
-}
-
-class EventParticipant {
-  UUID eventId
-  UUID memberId
-  enum status {yes,no,maybe,pending}
-  ts responseAt
-  ts createdAt
-}
-
-class Poll {
-  UUID id
-  UUID orgId
-  String title
-  String description
-  UUID created_by
-  ts deadline
-  bool is_closed
-  ts createdAt
-  ts updatedAt
-}
-
-class PollOption {
-  UUID id
-  UUID pollId
-  ts option_date
-  String option_label
-  ts createdAt
-}
-
-class PollVote {
-  UUID pollId
-  UUID optionId
-  UUID memberId
-  ts createdAt
-}
-
-class Fee {
-  UUID id
-  UUID orgId
-  String name
-  String description
-  decimal amount
-  enum period {yearly,monthly,quarterly,one_time}
-  bool is_active
-  ts createdAt
-  ts updatedAt
-}
-
-class FeePayment {
-  UUID id
-  UUID orgId
-  UUID memberId
-  UUID feeId
-  decimal amount
-  date due_date
-  date paid_at
-  String payment_method
-  enum status {open,paid,overdue,cancelled}
-  String notes
-  ts createdAt
-  ts updatedAt
-}
-
-%% =========================
-%% RELATIONSHIPS
-%% =========================
-Organization "1" --> "0..*" Member : org_id
-Organization "1" --> "0..*" Team   : org_id
-Organization "1" --> "0..*" Match  : org_id
-Organization "1" --> "0..*" Event  : org_id
-Organization "1" --> "0..*" Poll   : org_id
-Organization "1" --> "0..*" Fee    : org_id
-
-User "1" -- "0..*" Membership : users.id = memberships.user_id
-Organization "1" -- "0..*" Membership : organizations.id = memberships.org_id
-Member "0..1" -- "1" User : optional(user_id)
-
-Team "1" -- "0..*" TeamMember : team_id
-Member "1" -- "0..*" TeamMember : member_id
-Team "1" -- "0..*" Match : home_team_id
-Team "1" -- "0..*" Match : away_team_id
-Team "0..1" <-- "0..
-
+**Erstellt von Hans Hahn - Alle Rechte vorbehalten**
