@@ -1,0 +1,24 @@
+# 🐛 ERROR.LOG - DartClubManager
+
+Protokollierung aller Fehler, Probleme und deren Lösungen während der Entwicklung.
+
+Format:
+```
+[YYYY-MM-DD HH:MM:SS] ERROR: [Fehlerbeschreibung]
+Ursache: [Was war die Ursache]
+Lösung: [Wie wurde es gelöst]
+Verbesserung: [Was kann man beim nächsten Mal besser machen]
+---
+```
+
+---
+
+## [2025-09-29 10:00:00] INFO: error.log initialisiert
+
+**Status:** Keine Fehler bisher! 🎉
+
+**Projekt-Start:** DartClubManager erfolgreich aufgesetzt.
+
+---
+
+**Erstellt von Hans Hahn - Alle Rechte vorbehalten**
