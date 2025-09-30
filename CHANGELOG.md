@@ -157,8 +157,3 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 ```
 
 ---
-
-**Erstellt von Hans Hahn - Alle Rechte vorbehalten**  
-**Version:** 1.1  
-**Initialisiert:** 29.09.2025  
-**Zuletzt aktualisiert:** 29.09.2025
