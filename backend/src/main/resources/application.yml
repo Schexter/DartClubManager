@@ -1,0 +1,41 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: dartclub-backend
+
+  # Datasource Configuration
+  datasource:
+    url: jdbc:postgresql://postgres:5432/dartclub
+    username: dartclub
+    password: dartclub_dev_password
+    driver-class-name: org.postgresql.Driver
+
+  # JPA / Hibernate Configuration
+  jpa:
+    hibernate:
+      ddl-auto: validate # Flyway is responsible for the schema
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        default_schema: public
+
+  # Flyway Database Migration
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+
+# Springdoc OpenAPI (Swagger) Configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+# JWT Settings (Placeholder)
+jwt:
+  secret: "change-this-in-production-to-a-very-long-and-secure-secret-key"
+  expiration: 86400000 # 24 hours in ms
