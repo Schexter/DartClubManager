@@ -1,3 +1,4 @@
+```mermaid
 sequenceDiagram
     participant User
     participant Frontend (React App)
