@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Die Backend-URL wird aus den Umgebungsvariablen geladen
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 
 const apiClient = axios.create({
   baseURL: API_URL,
