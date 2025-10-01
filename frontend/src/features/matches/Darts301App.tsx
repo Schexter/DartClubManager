@@ -56,7 +56,7 @@ export default function Darts301App() {
             />
             Double-Out
           </label>
-          <button onClick={undo}>↶ Undo</button>
+          <button onClick={undo}>Undo</button>
           <button onClick={startNewLeg}>Neues Leg starten</button>
         </div>
       </div>
@@ -80,7 +80,7 @@ export default function Darts301App() {
         <div className="space-y-6">
           {/* Single */}
           <div>
-            <div>Single 1–20</div>
+            <div>Single 1-20</div>
             <div className="grid grid-cols-10 gap-2">
               {numberKeysTop.map((n) => (
                 <NumberKey key={`S-${n}`} n={n} dots={0} onClick={() => recordSingle(n)} />
@@ -94,7 +94,7 @@ export default function Darts301App() {
           </div>
           {/* Double */}
           <div>
-            <div>Double 1–20</div>
+            <div>Double 1-20</div>
             <div className="grid grid-cols-10 gap-2">
               {numberKeysTop.map((n) => (
                 <NumberKey key={`D-${n}`} n={n} dots={2} onClick={() => recordDouble(n)} />
@@ -108,7 +108,7 @@ export default function Darts301App() {
           </div>
           {/* Triple */}
           <div>
-            <div>Triple 1–20</div>
+            <div>Triple 1-20</div>
             <div className="grid grid-cols-10 gap-2">
               {numberKeysTop.map((n) => (
                 <NumberKey key={`T-${n}`} n={n} dots={3} onClick={() => recordTriple(n)} />
@@ -127,7 +127,7 @@ export default function Darts301App() {
           <ActionButton label="MISS" onClick={handleMiss} />
           <ActionButton label="Bull" onClick={handleBull} />
           <ActionButton label="Bullseye" onClick={handleBullseye} />
-          <ActionButton label="Nächster Spieler" onClick={nextPlayer} variant="primary" />
+          <ActionButton label="Naechster Spieler" onClick={nextPlayer} variant="primary" />
         </div>
       </div>
     </div>
@@ -137,25 +137,37 @@ export default function Darts301App() {
 function renderLastThrow(t: ThrowResult) {
   const seg = t.input.segment;
   let label = "";
-  if (seg.kind === "number") label = `${t.input.multiplier ?? 1}×${seg.value}`;
+  if (seg.kind === "number") label = `${t.input.multiplier ?? 1}x${seg.value}`; // x statt ×
   if (seg.kind === "bull") label = "Bull (25)";
   if (seg.kind === "bullseye") label = "Bullseye (50)";
   if (seg.kind === "miss") label = "Miss";
-  return `${label} — ${t.isBust ? "BUST" : `-${t.pointsScored}`} Rest: ${t.scoreAfter}`;
+  const scored = t.isBust ? "BUST" : `-${t.pointsScored}`;
+  return `${label} - ${scored} Rest: ${t.scoreAfter}`; // ASCII Minus statt Em-Dash
 }
 
-function NumberKey({ n, dots, onClick }: { n: number; dots: 0|2|3; onClick: () => void }) {
+function NumberKey({ n, dots, onClick }: { n: number; dots: 0 | 2 | 3; onClick: () => void }) {
   return (
     <button onClick={onClick} className="aspect-square border rounded flex flex-col items-center">
       <span>{n}</span>
-      {dots > 0 && <span className="text-xs">{Array(dots).fill("•").join(" ")}</span>}
+      {dots > 0 && <span className="text-xs">{Array(dots).fill(".").join(" ")}</span>}
     </button>
   );
 }
 
-function ActionButton({ label, onClick, variant = "default" }: { label: string; onClick: () => void; variant?: "default"|"primary" }) {
+function ActionButton({
+  label,
+  onClick,
+  variant = "default",
+}: {
+  label: string;
+  onClick: () => void;
+  variant?: "default" | "primary";
+}) {
   return (
-    <button onClick={onClick} className={`p-2 rounded ${variant==="primary" ? "bg-black text-white" : "bg-white border"}`}>
+    <button
+      onClick={onClick}
+      className={`p-2 rounded ${variant === "primary" ? "bg-black text-white" : "bg-white border"}`}
+    >
       {label}
     </button>
   );
