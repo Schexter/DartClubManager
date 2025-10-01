@@ -1,27 +1,9 @@
 services:
   postgres:
-    image: 'postgres:16-alpine'
-    container_name: dartclub-postgres
+    image: 'postgres:latest'
     environment:
-      - 'POSTGRES_DB=dartclub'
-      - 'POSTGRES_USER=dartclub'
-      - 'POSTGRES_PASSWORD=dartclub_dev_password'
+      - 'POSTGRES_DB=mydatabase'
+      - 'POSTGRES_PASSWORD=secret'
+      - 'POSTGRES_USER=myuser'
     ports:
-      - '5432:5432'
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dartclub -d dartclub"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - dartclub-network
-
-networks:
-  dartclub-network:
-    driver: bridge
-
-volumes:
-  postgres_data:
-    driver: local
+      - '5432'

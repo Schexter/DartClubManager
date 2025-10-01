@@ -118,7 +118,7 @@ classDiagram
         +TIMESTAMPTZ createdAt
     }
 
-    Organization "1" -- "0..*" Membership
+    Organization "1" -- "1..*" Membership
     User "1" -- "0..*" Membership
     Organization "1" -- "0..*" PlayerProfile
     User "1" -- "1" PlayerProfile
@@ -172,7 +172,7 @@ Stores authentication information for all users across all organizations.
 | `updated_at` | `TIMESTAMPTZ` | `NOT NULL` | Timestamp of last update. |
 
 #### `memberships`
-A join table linking users to organizations and defining their roles.
+A join table linking users to organizations and defining their roles. Each organization must have at least one member with the `ADMIN` role.
 
 | Column | Data Type | Constraints | Description |
 |---|---|---|---|

@@ -1,12 +1,12 @@
-import LandingPage from './features/landing/LandingPage';
 import './index.css';
 
 function App() {
-  // Aktuell wird nur die Landing Page angezeigt.
-  // Später kommt hier das Routing für die eigentliche App hinzu.
   return (
-    <LandingPage />
-  );
+    <div className="app-container">
+      <h1>Willkommen beim DartClubManager</h1>
+      <p>Das React-Frontend wurde erfolgreich geladen.</p>
+    </div>
+  )
 }
 
-export default App;
+export default App

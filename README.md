@@ -6,9 +6,6 @@
 [![React](https://img.shields.io/badge/React-18-blue.svg)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue.svg)](https://www.typescriptlang.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue.svg)](https://www.postgresql.org/)
-[![Docker](https://img.shields.io/badge/Docker-27+-blue.svg)](https://www.docker.com/)
-
-Erstellt von Hans Hahn - Alle Rechte vorbehalten
 
 ---
 
@@ -18,7 +15,6 @@ Erstellt von Hans Hahn - Alle Rechte vorbehalten
 - [Features](#features)
 - [Technologie-Stack](#technologie-stack)
 - [Architektur](#architektur)
-- [Voraussetzungen](#voraussetzungen)
 - [Installation](#installation)
 - [Nutzung](#nutzung)
 - [Entwicklung](#entwicklung)
@@ -100,250 +96,43 @@ src/
 
 ---
 
-## ⚙️ Voraussetzungen
-
-**WICHTIG:** Diese Software muss VOR der Projekt-Installation auf deinem System vorhanden sein!
-
-### **Erforderlich (MUST):**
-
-| Software | Min. Version | Download | Prüfung |
-|---|---|---|---|
-| **Java JDK** | 21+ | [Download](https://adoptium.net/) | `java -version` |
-| **Docker Desktop** | 27+ | [Download](https://www.docker.com/products/docker-desktop/) | `docker --version` |
-| **Node.js** | 20+ | [Download](https://nodejs.org/) | `node --version` |
-| **npm** | 10+ | (mit Node.js) | `npm --version` |
-| **Git** | 2.40+ | [Download](https://git-scm.com/) | `git --version` |
-
-### **Optional (für Komfort):**
-
-| Software | Verwendung | Download |
-|---|---|---|
-| **IntelliJ IDEA** | Backend-Entwicklung | [Download](https://www.jetbrains.com/idea/) |
-| **VS Code** | Frontend-Entwicklung | [Download](https://code.visualstudio.com/) |
-| **Postman** | API-Testing | [Download](https://www.postman.com/) |
-| **pgAdmin** | DB-Verwaltung | [Download](https://www.pgadmin.org/) |
-
----
-
 ## 📦 Installation
 
-### **Schritt 1: Voraussetzungen prüfen**
+### Voraussetzungen
 
-Öffne PowerShell/Terminal und prüfe, ob alle Tools installiert sind:
+- Java 21+
+- Docker & Docker Compose
+- Node.js 20+ & npm
+- Git
 
-```powershell
-# Java prüfen
-java -version
-# Erwartete Ausgabe: openjdk version "21.x.x"
-
-# Docker prüfen
-docker --version
-# Erwartete Ausgabe: Docker version 27.x.x
-
-# Node.js prüfen
-node --version
-# Erwartete Ausgabe: v20.x.x
-
-# npm prüfen
-npm --version
-# Erwartete Ausgabe: 10.x.x
-
-# Git prüfen
-git --version
-# Erwartete Ausgabe: git version 2.x.x
-```
-
-**Falls eine Software fehlt:** Installiere sie zuerst über die Links oben!
-
----
-
-### **Schritt 2: Repository klonen**
+### 1. Repository klonen
 
 ```bash
 git clone <repository-url>
 cd dartclub-manager
 ```
 
----
-
-### **Schritt 3: Datenbank starten (Docker)**
+### 2. Services starten
 
 ```bash
-# Starte PostgreSQL Container
-docker compose up -d
-
-# Prüfe, ob Container läuft
-docker compose ps
-# Status sollte "healthy" sein
-
-# Optional: Logs anschauen
-docker compose logs -f postgres
+docker-compose up -d
 ```
 
-**Erwartete Ausgabe:**
-```
-NAME                IMAGE                COMMAND                  SERVICE    CREATED         STATUS                   PORTS
-dartclub-postgres   postgres:16-alpine   "docker-entrypoint.s…"   postgres   10 seconds ago  Up 9 seconds (healthy)   0.0.0.0:5432->5432/tcp
-```
+### 3. Backend starten
 
----
+- Öffne das `backend`-Verzeichnis in deiner IDE.
+- Starte die Spring Boot Anwendung.
 
-### **Schritt 4: Backend starten**
-
-**Option A: IntelliJ IDEA**
-1. Öffne das Projekt in IntelliJ
-2. Warte, bis Gradle-Sync abgeschlossen ist
-3. Finde `Application.java` (src/main/java/com/dartclub/)
-4. Rechtsklick → "Run 'Application'"
-
-**Option B: Kommandozeile**
-```bash
-cd backend
-./gradlew bootRun
-
-# Windows CMD:
-gradlew.bat bootRun
-```
-
-**Erfolgreich, wenn:**
-```
-Started Application in 5.234 seconds (JVM running for 5.789)
-```
-
-**Backend läuft auf:** http://localhost:8080
-
----
-
-### **Schritt 5: Frontend starten**
+### 4. Frontend starten
 
 ```bash
 cd frontend
-
-# Dependencies installieren (nur beim ersten Mal)
 npm install
-
-# Dev-Server starten
 npm run dev
 ```
-
-**Erfolgreich, wenn:**
-```
-  VITE v5.1.6  ready in 234 ms
-
-  ➜  Local:   http://localhost:5173/
-  ➜  Network: use --host to expose
-```
-
-**Frontend läuft auf:** http://localhost:5173
-
----
-
-## 🚀 Nutzung
-
-### **Erste Schritte:**
-
-1. **Öffne Browser:** http://localhost:5173
-2. **Registriere einen Account** oder nutze Test-User:
-   - E-Mail: `admin@falcons.de`
-   - Passwort: `Test123!`
-3. **Erkunde die Features!**
-
-### **API-Dokumentation:**
-
-- **Swagger UI:** http://localhost:8080/swagger-ui.html
-- **Health Check:** http://localhost:8080/api/health
 
 ---
 
 ## 👨‍💻 Entwicklung
 
-### **Branch-Strategie:**
-
-Wir verwenden **Git Flow**:
-- `main` - Produktiv-Branch (nur stable Releases)
-- `develop` - Development-Branch (aktuelle Entwicklung)
-- `feature/*` - Feature-Branches
-- `hotfix/*` - Hotfix-Branches
-
-### **Commit-Messages:**
-
-Wir verwenden **Conventional Commits**:
-```
-feat: Add user registration endpoint
-fix: Fix JWT token expiration bug
-docs: Update README with Docker setup
-test: Add unit tests for AuthService
-```
-
-### **Code-Style:**
-
-- **Backend:** Google Java Style Guide
-- **Frontend:** Airbnb JavaScript Style Guide
-- **Automatisch:** ESLint + Prettier
-
----
-
-## 🔧 Troubleshooting
-
-### **Problem: "Port 8080 already in use"**
-
-```bash
-# Prüfe, was auf Port 8080 läuft
-netstat -ano | findstr :8080
-
-# Stoppe Backend
-# Ändere Port in application.yml: server.port=8081
-```
-
-### **Problem: "Port 5432 already in use"**
-
-```bash
-# Stoppe andere PostgreSQL-Instanz oder
-# Ändere Port in compose.yaml:
-ports:
-  - '5433:5432'
-```
-
-### **Problem: Docker Container startet nicht**
-
-```bash
-# Logs prüfen
-docker compose logs postgres
-
-# Container neu starten
-docker compose restart postgres
-
-# Alles neu aufbauen (löscht auch Daten!)
-docker compose down -v
-docker compose up -d
-```
-
-### **Problem: "Flyway migration failed"**
-
-```bash
-# Datenbank zurücksetzen
-docker compose down -v
-docker compose up -d
-
-# Backend neu starten
-./gradlew bootRun
-```
-
----
-
-## 📞 Support
-
-Bei Fragen oder Problemen:
-1. Prüfe [Troubleshooting](#troubleshooting)
-2. Schaue in [GitHub Issues](link-to-issues)
-3. Kontaktiere das Entwickler-Team
-
----
-
-## 📄 Lizenz
-
-Copyright © 2025 Hans Hahn - Alle Rechte vorbehalten
-
----
-
-**Happy Coding! 🎯**
+Wir verwenden **Conventional Commits** für eine saubere Git-Historie und **Git Flow** als Branch-Strategie.
