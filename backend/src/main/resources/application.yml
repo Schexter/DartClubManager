@@ -5,9 +5,17 @@ spring:
   application:
     name: dartclub-backend
 
+  # Docker Compose Support - DEAKTIVIERT wegen Windows/WSL2 Kompatibilitätsproblemen
+  # Starte PostgreSQL manuell mit: docker compose up -d
+  docker:
+    compose:
+      enabled: false
+      file: ../compose.yaml
+      lifecycle-management: start-and-stop
+
   # Datasource Configuration
   datasource:
-    url: jdbc:postgresql://postgres:5432/dartclub
+    url: jdbc:postgresql://localhost:5432/dartclub
     username: dartclub
     password: dartclub_dev_password
     driver-class-name: org.postgresql.Driver

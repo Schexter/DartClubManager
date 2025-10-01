@@ -166,19 +166,25 @@ cd dartclub-manager
 
 ---
 
-### **Schritt 3: Datenbank starten (Docker)**
+### **Schritt 3: Backend starten (startet automatisch PostgreSQL)**
+
+**AUTOMATISCH:** Das Backend startet PostgreSQL automatisch über Docker Compose!
 
 ```bash
-# Starte PostgreSQL Container
-docker compose up -d
+cd "Dart App/backend"
 
-# Prüfe, ob Container läuft
-docker compose ps
-# Status sollte "healthy" sein
+# Windows:
+gradlew.bat bootRun
 
-# Optional: Logs anschauen
-docker compose logs -f postgres
+# Linux/Mac:
+./gradlew bootRun
 ```
+
+Das Backend:
+- ✅ Startet automatisch PostgreSQL via Docker Compose
+- ✅ Führt Datenbank-Migrationen aus (Flyway)
+- ✅ Stoppt PostgreSQL beim Beenden automatisch
+- ✅ Läuft auf http://localhost:8080
 
 **Erwartete Ausgabe:**
 ```
@@ -188,33 +194,7 @@ dartclub-postgres   postgres:16-alpine   "docker-entrypoint.s…"   postgres   1
 
 ---
 
-### **Schritt 4: Backend starten**
-
-**Option A: IntelliJ IDEA**
-1. Öffne das Projekt in IntelliJ
-2. Warte, bis Gradle-Sync abgeschlossen ist
-3. Finde `Application.java` (src/main/java/com/dartclub/)
-4. Rechtsklick → "Run 'Application'"
-
-**Option B: Kommandozeile**
-```bash
-cd backend
-./gradlew bootRun
-
-# Windows CMD:
-gradlew.bat bootRun
-```
-
-**Erfolgreich, wenn:**
-```
-Started Application in 5.234 seconds (JVM running for 5.789)
-```
-
-**Backend läuft auf:** http://localhost:8080
-
----
-
-### **Schritt 5: Frontend starten**
+### **Schritt 4: Frontend starten**
 
 ```bash
 cd frontend
