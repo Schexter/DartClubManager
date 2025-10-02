@@ -33,16 +33,33 @@ export default function LoginScreen() {
     setError(null)
 
     try {
-      // TODO: API Call zum Backend
-      console.log('Login:', data)
-      
-      // Simuliere API Call
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
+      // API Call zum Backend
+      const response = await fetch('http://localhost:8080/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Login fehlgeschlagen')
+      }
+
+      const result = await response.json()
+      console.log('Login erfolgreich:', result)
+
+      // TODO: Token im LocalStorage speichern
+      // localStorage.setItem('token', result.token)
+
       // Erfolgreicher Login → Dashboard
       navigate('/dashboard')
     } catch (err) {
-      setError('Login fehlgeschlagen. Bitte überprüfen Sie Ihre Zugangsdaten.')
+      setError(err instanceof Error ? err.message : 'Login fehlgeschlagen. Bitte überprüfen Sie Ihre Zugangsdaten.')
     } finally {
       setIsLoading(false)
     }
@@ -133,7 +150,7 @@ export default function LoginScreen() {
           {/* Register Link */}
           <div className="mt-6 text-center text-sm text-gray-600">
             Noch kein Konto?{' '}
-            <a href="#" className="text-primary hover:text-primary-dark font-medium">
+            <a href="/register" className="text-primary hover:text-primary-dark font-medium">
               Registrieren
             </a>
           </div>

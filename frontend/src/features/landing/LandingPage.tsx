@@ -63,9 +63,9 @@ const Navigation = () => {
             <a href="#contact" className="text-gray-700 hover:text-primary transition-colors duration-200">
               Kontakt
             </a>
-            <button className="px-4 py-2 text-secondary border-2 border-secondary rounded-lg font-medium hover:bg-secondary hover:text-white transition-all duration-200">
+            <a href="/login" className="px-4 py-2 text-secondary border-2 border-secondary rounded-lg font-medium hover:bg-secondary hover:text-white transition-all duration-200">
               Zum Login
-            </button>
+            </a>
           </div>
 
           {/* Mobile Menu Button */}
@@ -93,9 +93,9 @@ const Navigation = () => {
             <a href="#contact" className="block text-gray-700 hover:text-primary transition-colors">
               Kontakt
             </a>
-            <button className="w-full px-4 py-2 text-secondary border-2 border-secondary rounded-lg font-medium hover:bg-secondary hover:text-white transition-all">
+            <a href="/login" className="block w-full px-4 py-2 text-secondary border-2 border-secondary rounded-lg font-medium hover:bg-secondary hover:text-white transition-all text-center">
               Zum Login
-            </button>
+            </a>
           </div>
         )}
       </div>
@@ -134,9 +134,9 @@ const HeroSection = () => (
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <button className="px-8 py-4 bg-secondary text-white rounded-lg font-bold text-lg hover:bg-secondary-dark transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl">
+          <a href="/register" className="px-8 py-4 bg-secondary text-white rounded-lg font-bold text-lg hover:bg-secondary-dark transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl text-center">
             Jetzt als Pilot-Verein starten
-          </button>
+          </a>
           <button className="px-8 py-4 bg-white/10 backdrop-blur-sm text-white border-2 border-white/30 rounded-lg font-bold text-lg hover:bg-white/20 transition-all duration-200">
             Demo ansehen
           </button>
@@ -383,9 +383,9 @@ const FinalCTASection = () => (
       <p className="text-xl text-white/90 mb-8">
         Werde jetzt einer unserer ersten Beta-Tester und nutze DartClubManager 6 Monate lang völlig kostenlos.
       </p>
-      <button className="px-8 py-4 bg-white text-primary rounded-lg font-bold text-lg hover:bg-gray-100 transform hover:scale-105 transition-all duration-200 shadow-xl">
+      <a href="/register" className="inline-block px-8 py-4 bg-white text-primary rounded-lg font-bold text-lg hover:bg-gray-100 transform hover:scale-105 transition-all duration-200 shadow-xl">
         Registriere dich als Beta-Tester
-      </button>
+      </a>
     </div>
   </section>
 );
