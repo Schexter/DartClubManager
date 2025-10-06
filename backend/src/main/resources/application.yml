@@ -5,11 +5,10 @@ spring:
   application:
     name: dartclub-backend
 
-  # Docker Compose Support - DEAKTIVIERT wegen Windows/WSL2 Kompatibilitätsproblemen
-  # Starte PostgreSQL manuell mit: docker compose up -d
+  # Docker Compose Support - Spring Boot startet Docker automatisch!
   docker:
     compose:
-      enabled: false
+      enabled: true
       file: ../compose.yaml
       lifecycle-management: start-and-stop
 

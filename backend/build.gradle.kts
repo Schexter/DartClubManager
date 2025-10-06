@@ -22,8 +22,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-security")
 
-    // Docker Compose Support - Startet automatisch PostgreSQL
-    developmentOnly("org.springframework.boot:spring-boot-docker-compose")
+    // Docker Compose Support - DEAKTIVIERT (manuelles Management via Gradle Task)
+    // developmentOnly("org.springframework.boot:spring-boot-docker-compose")
 
     // Database
     implementation("org.flywaydb:flyway-core")
@@ -62,6 +62,113 @@ dependencyManagement {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+// Custom Task zum Starten der PostgreSQL-Datenbank
+tasks.register("startDatabase") {
+    group = "application"
+    description = "Startet die PostgreSQL-Datenbank mit Docker Compose"
+
+    doLast {
+        println("\n=== Starte PostgreSQL-Datenbank ===\n")
+
+        try {
+            // rootDir ist 'Dart App', das ist wo docker-compose.yml liegt
+            val composeDir = project.rootDir
+            val isWindows = System.getProperty("os.name").lowercase().contains("windows")
+
+            // Für Windows: Verwende docker.exe explizit, falls docker nicht im PATH ist
+            val dockerCommand = if (isWindows) {
+                try {
+                    ProcessBuilder("docker", "--version").start().waitFor()
+                    "docker"
+                } catch (e: Exception) {
+                    "docker.exe"
+                }
+            } else {
+                "docker"
+            }
+
+            // Prüfe ob Docker läuft
+            val psProcess = ProcessBuilder(dockerCommand, "ps")
+                .redirectErrorStream(true)
+                .start()
+            val psOutput = psProcess.inputStream.bufferedReader().readText()
+            psProcess.waitFor()
+
+            if (psProcess.exitValue() != 0) {
+                println("❌ Docker läuft nicht!")
+                if (isWindows) {
+                    println("\n👉 Bitte starte Docker Desktop und versuche es erneut.\n")
+                } else {
+                    println("\n👉 Bitte starte Docker und versuche es erneut.\n")
+                }
+                throw GradleException("Docker ist nicht verfügbar")
+            }
+
+            // Prüfe ob das Volume existiert - wenn ja, könnte es ein Passwort-Problem geben
+            val volumeCheck = ProcessBuilder(dockerCommand, "volume", "ls", "-q")
+                .redirectErrorStream(true)
+                .start()
+            val volumes = volumeCheck.inputStream.bufferedReader().readText()
+            volumeCheck.waitFor()
+
+            val hasOldVolume = volumes.contains("dartapp_postgres_data")
+
+            val composeProcess = ProcessBuilder(dockerCommand, "compose", "up", "-d", "postgres")
+                .directory(composeDir)
+                .redirectErrorStream(true)
+                .start()
+
+            val output = composeProcess.inputStream.bufferedReader().readText()
+            composeProcess.waitFor()
+
+            if (composeProcess.exitValue() == 0) {
+                println(output)
+                println("✅ PostgreSQL-Container gestartet")
+
+                // Warte auf Datenbank-Bereitschaft mit Health-Check
+                println("⏳ Warte auf Datenbank-Bereitschaft...")
+
+                // Warte initial 15 Sekunden, damit DB Zeit hat hochzufahren
+                Thread.sleep(15000)
+
+                var dbReady = false
+                for (i in 1..30) {
+                    Thread.sleep(1000)
+
+                    val healthCheck = ProcessBuilder(dockerCommand, "exec", "dartclub-postgres",
+                        "pg_isready", "-U", "dartclub", "-d", "dartclub")
+                        .redirectErrorStream(true)
+                        .start()
+
+                    healthCheck.waitFor()
+
+                    if (healthCheck.exitValue() == 0) {
+                        dbReady = true
+                        println("✅ PostgreSQL-Datenbank bereit (nach $i Sekunden)")
+                        break
+                    }
+                    print(".")
+                }
+
+                if (!dbReady) {
+                    throw GradleException("Datenbank wurde nicht rechtzeitig bereit")
+                }
+            } else {
+                println("❌ Fehler beim Starten der Datenbank:")
+                println(output)
+                throw GradleException("Konnte Datenbank nicht starten")
+            }
+        } catch (e: GradleException) {
+            throw e
+        } catch (e: Exception) {
+            println("❌ Docker Compose nicht verfügbar - ${e.message}")
+            throw GradleException("Stelle sicher, dass Docker läuft und im PATH ist")
+        }
+
+        println("\n=== Datenbank bereit ===\n")
+    }
 }
 
 // Custom Task zum Setup-Check
@@ -114,7 +221,11 @@ tasks.register("checkSetup") {
     }
 }
 
-// bootRun hängt von checkSetup ab
+// bootRun hängt von checkSetup ab (startDatabase manuell vorher ausführen!)
 tasks.named("bootRun") {
     dependsOn("checkSetup")
+    // HINWEIS: startDatabase wurde entfernt wegen Timing-Problemen
+    // Führe MANUELL aus: gradlew.bat startDatabase
+    // Dann 20-30 Sekunden warten!
+    // Dann: gradlew.bat :backend:bootRun
 }

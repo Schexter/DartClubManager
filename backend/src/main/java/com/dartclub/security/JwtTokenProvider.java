@@ -12,6 +12,7 @@ import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 
 @Service
@@ -38,6 +39,65 @@ public class JwtTokenProvider {
 
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
         return buildToken(extraClaims, userDetails, jwtExpiration);
+    }
+
+    /**
+     * Generiert Token für Multi-Tenancy mit userId, orgId und role
+     */
+    public String generateToken(UUID userId, UUID orgId, String role) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("user_id", userId.toString());
+        if (orgId != null) {
+            claims.put("org_id", orgId.toString());
+        }
+        if (role != null) {
+            claims.put("role", role);
+        }
+        
+        return Jwts.builder()
+                .setClaims(claims)
+                .setSubject(userId.toString())
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration))
+                .signWith(getSignInKey())
+                .compact();
+    }
+
+    /**
+     * Extrahiert User ID aus Token
+     */
+    public UUID getUserIdFromToken(String token) {
+        Claims claims = extractAllClaims(token);
+        return UUID.fromString(claims.getSubject());
+    }
+
+    /**
+     * Extrahiert Organization ID aus Token
+     */
+    public UUID getOrgIdFromToken(String token) {
+        Claims claims = extractAllClaims(token);
+        String orgId = claims.get("org_id", String.class);
+        return orgId != null ? UUID.fromString(orgId) : null;
+    }
+
+    /**
+     * Extrahiert Role aus Token
+     */
+    public String getRoleFromToken(String token) {
+        Claims claims = extractAllClaims(token);
+        return claims.get("role", String.class);
+    }
+
+    /**
+     * Validiert Token (ohne UserDetails)
+     */
+    public boolean validateToken(String token) {
+        try {
+            extractAllClaims(token);
+            return !isTokenExpired(token);
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private String buildToken(Map<String, Object> extraClaims, UserDetails userDetails, long expiration) {

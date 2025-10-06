@@ -1,10 +1,21 @@
-package com.dartclub.backend.model;
+package com.dartclub.model.entity;
 
 import jakarta.persistence.*;
+import lombok.*;
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
+/**
+ * User Entity - Authentifizierung & Account Management
+ * 
+ * @author Hans Hahn - Alle Rechte vorbehalten
+ */
 @Entity
 @Table(name = "users")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class User {
 
     @Id
@@ -21,51 +32,23 @@ public class User {
     private String displayName;
 
     @Column(name = "is_active")
+    @Builder.Default
     private Boolean isActive = true;
 
-    // Standardkonstruktor (für JPA)
-    public User() {}
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private ZonedDateTime createdAt;
 
-    // Konstruktor für die Registrierung
-    public User(String email, String passwordHash, String displayName) {
-        this.email = email;
-        this.passwordHash = passwordHash;
-        this.displayName = displayName;
+    @Column(name = "updated_at")
+    private ZonedDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = ZonedDateTime.now();
+        updatedAt = ZonedDateTime.now();
     }
 
-    public UUID getId() {
-        return id;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getPasswordHash() {
-        return passwordHash;
-    }
-
-    public String getDisplayName() {
-        return displayName;
-    }
-
-    public Boolean getIsActive() {
-        return isActive;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public void setPasswordHash(String passwordHash) {
-        this.passwordHash = passwordHash;
-    }
-
-    public void setDisplayName(String displayName) {
-        this.displayName = displayName;
-    }
-
-    public void setIsActive(Boolean isActive) {
-        this.isActive = isActive;
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = ZonedDateTime.now();
     }
 }

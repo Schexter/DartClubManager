@@ -21,4 +21,82 @@ Verbesserung: [Was kann man beim nächsten Mal besser machen]
 
 ---
 
+## [2025-10-02 19:42:00] ERROR: PostgreSQL Authentifizierung fehlgeschlagen
+
+**Fehlermeldung:**
+```
+FATAL: Passwort-Authentifizierung für Benutzer 'dartclub' fehlgeschlagen
+SQL State: 28P01
+```
+
+**Ursache:**
+Konflikt zwischen Spring Boot Docker Compose Integration und manuellem Docker Management:
+- Dependency `spring-boot-docker-compose` war eingebunden aber deaktiviert
+- Dies führte zu Konflikten bei der Verbindungsherstellung
+- Docker Container lief perfekt, aber Spring Boot konnte sich nicht verbinden
+- Encoding-Probleme in Fehlermeldungen (CP1252 vs UTF-8)
+
+**Lösung:**
+1. Spring Boot Docker Compose Dependency in `build.gradle.kts` auskommentiert
+2. Docker Compose Config aus `application.yml` entfernt
+3. Docker Compose Config aus `application-local.yml` bereinigt
+4. Gradle Cache gelöscht (`backend/build` und `.gradle`)
+5. Docker komplett neu aufgesetzt (`docker compose down -v`)
+6. PostgreSQL Container mit 15 Sekunden Wartezeit gestartet
+
+**Verbesserungen für die Zukunft:**
+- **Architektur-Entscheidung:** Entweder Spring Boot Docker Compose Integration ODER manuelles Management, niemals beides!
+- **Dokumentation:** Troubleshooting-Guide erstellt (`docs/TROUBLESHOOTING_PostgreSQL_Auth.md`)
+- **Test-Skript:** Automatisiertes Test-Skript für DB-Setup (`scripts/test-fix.bat`)
+- **Health-Checks:** Wartezeit in Gradle Task von 1s auf 15s erhöht
+- **Clean State:** Bei DB-Problemen immer Volumes mit `-v` Flag löschen
+
+**Status:** ✅ GELÖST
+
+**Lessons Learned:**
+1. Hybrid-Lösungen (teilweise aktiviert/deaktiviert) sind fehleranfällig
+2. Windows-Encoding kann zu verwirrenden Fehlermeldungen führen
+3. PostgreSQL braucht 10-15 Sekunden zum vollständigen Initialisieren
+4. Volumes können alte Konfigurationen speichern - immer mit `-v` löschen
+
+---
+
+## [2025-10-06 09:20:00] ERROR: PostgreSQL Authentifizierung fehlgeschlagen (ERNEUT)
+
+**Fehlermeldung:**
+```
+FATAL: Passwort-Authentifizierung für Benutzer 'dartclub' fehlgeschlagen
+SQL State: 28P01
+Error Code: 0
+```
+
+**Ursache:**
+Das Problem trat erneut auf - PostgreSQL Container hatte altes Volume mit anderem Passwort:
+- Container lief (Status: Running)
+- Aber das Volume enthielt eine alte DB-Initialisierung
+- Passwort in `compose.yaml` = `dartclub_dev_password`
+- Passwort in altem Volume = vermutlich anders oder nicht gesetzt
+- Flyway konnte keine Verbindung aufbauen
+
+**Lösung:**
+1. Docker Container gestoppt: `docker compose down -v` (Volume löschen!)
+2. Container neu gestartet: `docker compose up -d` oder `gradlew.bat startDatabase`
+3. 5-10 Sekunden warten bis PostgreSQL vollständig initialisiert ist
+4. Backend neu starten: `gradlew.bat :backend:bootRun`
+
+**Verbesserungen für die Zukunft:**
+- **Gradle Task verbessern:** `startDatabase` sollte automatisch alte Container/Volumes löschen
+- **Health-Check:** Erweiterte Prüfung ob Passwort korrekt ist
+- **Dokumentation:** README.md um "Clean Start" Sektion erweitern
+- **Script erstellen:** `clean-database.bat` für schnelles Reset
+
+**Status:** ⏳ IN BEARBEITUNG (Backend wird neu gestartet)
+
+**Lessons Learned:**
+1. Bei DB-Problemen IMMER mit `-v` Flag Volumes löschen
+2. Alte Volumes können Stunden/Tage später Probleme verursachen
+3. Docker Volumes sind persistent über Container-Neustarts hinweg
+
+---
+
 **Erstellt von Hans Hahn - Alle Rechte vorbehalten**
