@@ -4,14 +4,17 @@ services:
     container_name: dartclub-postgres-fresh
     environment:
       POSTGRES_DB: dartclub
-      POSTGRES_USER: dartclub
-      POSTGRES_PASSWORD: dartclub_dev_password
+      POSTGRES_USER: dartclub_user
+      POSTGRES_PASSWORD: dartclub_password
+      PGDATA: /var/lib/postgresql/data/pgdata
     ports:
-      - '5432:5432'
+      - '5434:5432'
     volumes:
-      - postgres_data_v2:/var/lib/postgresql/data
+      - postgres_data_v5:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/10-init.sql:ro
+      - ./20-configure-auth.sh:/docker-entrypoint-initdb.d/20-configure-auth.sh:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dartclub -d dartclub"]
+      test: ["CMD-SHELL", "pg_isready -U dartclub_user -d dartclub"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -23,5 +26,5 @@ networks:
     driver: bridge
 
 volumes:
-  postgres_data_v2:
+  postgres_data_v5:
     driver: local

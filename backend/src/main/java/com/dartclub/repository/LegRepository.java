@@ -23,10 +23,10 @@ public interface LegRepository extends JpaRepository<Leg, UUID> {
     /**
      * Finde Legs nach Spieler (Home oder Away)
      */
-    List<Leg> findByHomePlayerIdOrAwayPlayerId(UUID homePlayerId, UUID awayPlayerId);
+    List<Leg> findByHomeMemberIdOrAwayMemberId(UUID homeMemberId, UUID awayMemberId);
     
     /**
      * Finde gewonnene Legs eines Spielers in einem Set
      */
-    List<Leg> findBySetIdAndWinnerId(UUID setId, UUID winnerId);
+    List<Leg> findBySetIdAndWinnerMemberId(UUID setId, UUID winnerMemberId);
 }
