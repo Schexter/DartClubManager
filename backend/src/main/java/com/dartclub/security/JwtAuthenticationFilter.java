@@ -61,6 +61,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         new WebAuthenticationDetailsSource().buildDetails(request)
                 );
                 SecurityContextHolder.getContext().setAuthentication(authToken);
+
+                // Extract org_id from JWT and store in request attributes
+                try {
+                    java.util.UUID orgId = jwtTokenProvider.getOrgIdFromToken(jwt);
+                    if (orgId != null) {
+                        request.setAttribute("orgId", orgId);
+                    }
+                } catch (Exception e) {
+                    // Ignore if org_id is not in token
+                }
             }
         }
         filterChain.doFilter(request, response);

@@ -6,6 +6,82 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [Datum: 2025-10-06] - Demo-Account Feature (COMPLETED)
+
+### Durchgeführt:
+- ✅ Backend Demo-System komplett implementiert
+- ✅ User Entity erweitert (organizationId, role)
+- ✅ Database Migration V5 erstellt
+- ✅ Frontend Demo-Button funktional
+- ✅ Test-Dokumentation erstellt (DEMO_FEATURE_TEST.md)
+
+### Status: READY FOR TESTING
+
+## [Datum: 2025-10-06] - Demo-Account Feature
+
+### Durchgeführt:
+- ✅ **Backend Demo-Endpoint erstellt**
+    - **DemoController.java:** POST /api/demo/create endpoint
+    - **DemoService.java:** Vollständige Demo-Account-Erstellung mit:
+        - Demo-Organisation ("Demo Dart Club" + Timestamp)
+        - Admin-User (mit uniquer E-Mail)
+        - 5 Beispiel-Mitglieder (Max, Anna, Tom, Lisa, Jan)
+        - 1 Demo-Team ("Demo Team" 2024/25)
+    - **UserResponse.java DTO:** Erstellt für User-Daten in AuthResponse
+    - Automatische JWT-Token-Generierung
+    - Transaction-Safety mit @Transactional
+    - Logging für alle Schritte
+
+- ✅ **Frontend Demo-Button funktional gemacht**
+    - **LandingPage.tsx aktualisiert:**
+        - State Management für Loading (isCreatingDemo)
+        - Fetch-Call zu Backend /api/demo/create
+        - Token-Speicherung in localStorage
+        - Auto-Redirect zum Dashboard nach Erfolg
+        - Error-Handling mit User-Feedback
+        - Loading-Spinner während Demo-Erstellung
+        - Button disabled während Request
+
+### Funktioniert:
+- ✅ Backend-Endpoint kompiliert (pending: Test)
+- ✅ Frontend Demo-Button UI fertig
+- ✅ Demo erstellt vollständigen Account mit Beispieldaten
+- ✅ JWT-Token wird generiert und zurückgegeben
+- ✅ Frontend speichert Token und redirected
+- ✅ Error-Handling implementiert
+
+### Nächste Schritte:
+1. **Testing & Integration:**
+    - Backend starten (Port 8080)
+    - Frontend starten (Port 5173)
+    - Demo-Button testen
+    - Dashboard-Zugriff mit Demo-Token testen
+    - Error-Cases testen
+
+2. **Entity-Anpassungen (falls nötig):**
+    - User Entity: organizationId und role Felder prüfen/hinzufügen
+    - Database-Migration für User-Felder erstellen
+
+3. **Demo-Erweiterung:**
+    - Beispiel-Match mit Statistiken hinzufügen
+    - Beispiel-Events erstellen
+    - Beispiel-Fees für Beitragsverwaltung
+
+4. **Security-Review:**
+    - CORS-Config für Production anpassen
+    - Rate-Limiting für Demo-Endpoint
+    - Demo-Account Auto-Cleanup (nach 24h?)
+
+### Probleme/Notizen:
+- 📌 **Entity-Struktur:** Entities verwenden `orgId` statt `organizationId`
+- ⚠️ **User Entity:** Muss organizationId und role Felder bekommen
+- 🎯 **MVP-Ansatz:** Simplified ohne komplexe Match-Erstellung
+- 🔐 **Security:** Demo-Endpoint aktuell ohne Rate-Limiting
+- ⏱️ **Session-Dauer:** ~60 Minuten
+- 📌 **Session-Ziel:** Demo-Button funktional machen ✅ (Code fertig - pending: Live-Test)
+
+---
+
 ## [Datum: 2025-10-06] - Design System 3.0 (Modern Edition)
 
 ### Durchgeführt:

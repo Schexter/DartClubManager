@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { login, clearError, selectAuth } from './authSlice';
+import heroImage from '../../assets/anding-page-hero.jpg'; // Bild importieren
 
 // Validation Schema
 const loginSchema = z.object({
@@ -57,29 +58,24 @@ export default function LoginScreen() {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-gray-900 via-primary-dark to-gray-900 p-4">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-10">
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
-            backgroundSize: '40px 40px',
-          }}
-        ></div>
-      </div>
+    <div 
+      className="relative min-h-screen flex items-center justify-center overflow-hidden bg-cover bg-center p-4"
+      style={{ backgroundImage: `url(${heroImage})` }}
+    >
+      {/* Dark Overlay */}
+      <div className="absolute inset-0 bg-gray-900/70 backdrop-blur-sm"></div>
 
       {/* Main Content */}
       <div className="relative z-10 w-full max-w-md animate-fade-in-up">
         {/* Logo */}
         <div className="text-center mb-8">
-          <Link to="/" className="inline-block text-3xl font-bold bg-gradient-to-r from-primary to-primary-dark bg-clip-text text-transparent">
+          <Link to="/" className="inline-block text-4xl font-bold text-white drop-shadow-lg">
             🎯 DartClubManager
           </Link>
         </div>
 
         {/* Form Card */}
-        <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl shadow-2xl p-8">
+        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl shadow-2xl p-8">
           <h2 className="text-2xl font-semibold text-white mb-6 text-center">Anmelden</h2>
 
           {/* Success Message on Registration */}

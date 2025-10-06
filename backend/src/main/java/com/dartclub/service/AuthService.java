@@ -38,41 +38,45 @@ public class AuthService {
             throw new RuntimeException("E-Mail bereits registriert");
         }
 
-        // Create User
+        // Create Organization FIRST (required for user.organization_id)
+        String orgName = request.getOrganizationName() != null
+            ? request.getOrganizationName()
+            : request.getDisplayName() + "'s Organization";
+
+        String slug = request.getOrganizationSlug() != null
+            ? request.getOrganizationSlug()
+            : generateSlug(orgName) + "-" + System.currentTimeMillis();
+
+        Organization org = Organization.builder()
+                .name(orgName)
+                .slug(slug)
+                .build();
+        org = organizationRepository.save(org);
+
+        // Create User with organization_id (NOT NULL constraint)
         User user = User.builder()
                 .email(request.getEmail())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .displayName(request.getDisplayName())
+                .organizationId(org.getId())
+                .role(UserRole.ADMIN)
                 .isActive(true)
                 .build();
         user = userRepository.save(user);
 
-        // Create Organization (if provided)
-        Organization org = null;
-        if (request.getOrganizationName() != null) {
-            String slug = request.getOrganizationSlug() != null 
-                ? request.getOrganizationSlug() 
-                : generateSlug(request.getOrganizationName());
-
-            org = Organization.builder()
-                    .name(request.getOrganizationName())
-                    .slug(slug)
-                    .build();
-            org = organizationRepository.save(org);
-
-            // Create Membership (User as Admin)
-            Membership membership = Membership.builder()
-                    .userId(user.getId())
-                    .orgId(org.getId())
-                    .role(UserRole.ADMIN)
-                    .status("active")
-                    .build();
-            membershipRepository.save(membership);
-        }
+        // Create Membership (User as Admin)
+        Membership membership = Membership.builder()
+                .userId(user.getId())
+                .orgId(org.getId())
+                .role(UserRole.ADMIN)
+                .status("active")
+                .build();
+        membershipRepository.save(membership);
 
         // Generate JWT Token
-        String token = jwtTokenProvider.generateToken(user.getId(), 
-                org != null ? org.getId() : null, 
+        String token = jwtTokenProvider.generateToken(
+                user.getId(),
+                org.getId(),
                 UserRole.ADMIN.getValue());
 
         // Build Response

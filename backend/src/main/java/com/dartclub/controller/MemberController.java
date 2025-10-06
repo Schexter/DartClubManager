@@ -1,9 +1,11 @@
 package com.dartclub.controller;
 
 import com.dartclub.model.dto.request.CreateMemberRequest;
+import com.dartclub.model.dto.request.CreateMemberWithAccountRequest;
 import com.dartclub.model.dto.request.UpdateMemberRequest;
 import com.dartclub.model.dto.response.MemberResponse;
 import com.dartclub.service.MemberService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -26,12 +28,25 @@ public class MemberController {
     private final MemberService memberService;
 
     /**
+     * Helper: Extract orgId from JWT (via request attribute) or header
+     */
+    private UUID getOrgId(HttpServletRequest request, @RequestHeader(value = "X-Org-Id", required = false) UUID headerOrgId) {
+        UUID orgId = (UUID) request.getAttribute("orgId");
+        return orgId != null ? orgId : headerOrgId;
+    }
+
+    /**
      * Alle Mitglieder einer Organisation abrufen
      * GET /api/members
      */
     @GetMapping
     public ResponseEntity<List<MemberResponse>> getAllMembers(
-            @RequestHeader("X-Org-Id") UUID orgId) {
+            HttpServletRequest servletRequest,
+            @RequestHeader(value = "X-Org-Id", required = false) UUID headerOrgId) {
+        UUID orgId = getOrgId(servletRequest, headerOrgId);
+        if (orgId == null) {
+            throw new RuntimeException("Organization ID nicht gefunden. Bitte neu einloggen.");
+        }
         return ResponseEntity.ok(memberService.getAllMembers(orgId));
     }
 
@@ -42,7 +57,12 @@ public class MemberController {
     @GetMapping("/{id}")
     public ResponseEntity<MemberResponse> getMemberById(
             @PathVariable UUID id,
-            @RequestHeader("X-Org-Id") UUID orgId) {
+            HttpServletRequest servletRequest,
+            @RequestHeader(value = "X-Org-Id", required = false) UUID headerOrgId) {
+        UUID orgId = getOrgId(servletRequest, headerOrgId);
+        if (orgId == null) {
+            throw new RuntimeException("Organization ID nicht gefunden. Bitte neu einloggen.");
+        }
         return ResponseEntity.ok(memberService.getMemberById(id, orgId));
     }
 
@@ -53,8 +73,29 @@ public class MemberController {
     @PostMapping
     public ResponseEntity<MemberResponse> createMember(
             @Valid @RequestBody CreateMemberRequest request,
-            @RequestHeader("X-Org-Id") UUID orgId) {
+            HttpServletRequest servletRequest,
+            @RequestHeader(value = "X-Org-Id", required = false) UUID headerOrgId) {
+        UUID orgId = getOrgId(servletRequest, headerOrgId);
+        if (orgId == null) {
+            throw new RuntimeException("Organization ID nicht gefunden. Bitte neu einloggen.");
+        }
         return ResponseEntity.ok(memberService.createMember(request, orgId));
+    }
+
+    /**
+     * Mitglied mit User-Account direkt anlegen
+     * POST /api/members/create-with-account
+     */
+    @PostMapping("/create-with-account")
+    public ResponseEntity<MemberResponse> createMemberWithAccount(
+            @Valid @RequestBody CreateMemberWithAccountRequest request,
+            HttpServletRequest servletRequest,
+            @RequestHeader(value = "X-Org-Id", required = false) UUID headerOrgId) {
+        UUID orgId = getOrgId(servletRequest, headerOrgId);
+        if (orgId == null) {
+            throw new RuntimeException("Organization ID nicht gefunden. Bitte neu einloggen.");
+        }
+        return ResponseEntity.ok(memberService.createMemberWithAccount(request, orgId));
     }
 
     /**
@@ -65,7 +106,12 @@ public class MemberController {
     public ResponseEntity<MemberResponse> updateMember(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateMemberRequest request,
-            @RequestHeader("X-Org-Id") UUID orgId) {
+            HttpServletRequest servletRequest,
+            @RequestHeader(value = "X-Org-Id", required = false) UUID headerOrgId) {
+        UUID orgId = getOrgId(servletRequest, headerOrgId);
+        if (orgId == null) {
+            throw new RuntimeException("Organization ID nicht gefunden. Bitte neu einloggen.");
+        }
         return ResponseEntity.ok(memberService.updateMember(id, request, orgId));
     }
 
@@ -76,7 +122,12 @@ public class MemberController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteMember(
             @PathVariable UUID id,
-            @RequestHeader("X-Org-Id") UUID orgId) {
+            HttpServletRequest servletRequest,
+            @RequestHeader(value = "X-Org-Id", required = false) UUID headerOrgId) {
+        UUID orgId = getOrgId(servletRequest, headerOrgId);
+        if (orgId == null) {
+            throw new RuntimeException("Organization ID nicht gefunden. Bitte neu einloggen.");
+        }
         memberService.deleteMember(id, orgId);
         return ResponseEntity.noContent().build();
     }

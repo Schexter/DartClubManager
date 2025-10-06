@@ -38,7 +38,7 @@ interface RecentMatch {
 
 export const DashboardScreen: React.FC<DashboardScreenProps> = ({ organizations }) => {
   const navigate = useNavigate();
-  const [selectedOrg, setSelectedOrg] = useState<Organization>(organizations[0]);
+  const [selectedOrg, setSelectedOrg] = useState<Organization | null>(organizations[0] || null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentMatches, setRecentMatches] = useState<RecentMatch[]>([]);
   const [isLoading, setIsLoading] = useState(true);

@@ -1,11 +1,18 @@
 package com.dartclub.service;
 
 import com.dartclub.model.dto.request.CreateMemberRequest;
+import com.dartclub.model.dto.request.CreateMemberWithAccountRequest;
 import com.dartclub.model.dto.request.UpdateMemberRequest;
 import com.dartclub.model.dto.response.MemberResponse;
 import com.dartclub.model.entity.Member;
+import com.dartclub.model.entity.Membership;
+import com.dartclub.model.entity.User;
+import com.dartclub.model.enums.UserRole;
 import com.dartclub.repository.MemberRepository;
+import com.dartclub.repository.MembershipRepository;
+import com.dartclub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +30,9 @@ import java.util.stream.Collectors;
 public class MemberService {
 
     private final MemberRepository memberRepository;
+    private final UserRepository userRepository;
+    private final MembershipRepository membershipRepository;
+    private final PasswordEncoder passwordEncoder;
 
     /**
      * Alle Mitglieder einer Organisation abrufen
@@ -59,6 +69,53 @@ public class MemberService {
                 .notes(request.getNotes())
                 .build();
         member = memberRepository.save(member);
+        return toResponse(member);
+    }
+
+    /**
+     * Mitglied mit User-Account direkt anlegen
+     * Erstellt User + Member + Membership in einem Schritt
+     */
+    @Transactional
+    public MemberResponse createMemberWithAccount(CreateMemberWithAccountRequest request, UUID orgId) {
+        // 1. Prüfen ob E-Mail bereits existiert
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new RuntimeException("E-Mail bereits registriert");
+        }
+
+        // 2. User anlegen
+        User user = User.builder()
+                .email(request.getEmail())
+                .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .displayName(request.getFirstName() + " " + request.getLastName())
+                .isActive(true)
+                .build();
+        user = userRepository.save(user);
+
+        // 3. Member anlegen (verlinkt mit User)
+        Member member = Member.builder()
+                .orgId(orgId)
+                .userId(user.getId())
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .email(request.getEmail())
+                .phone(request.getPhone())
+                .birthdate(request.getBirthdate())
+                .licenseNo(request.getLicenseNo())
+                .handedness(request.getHandedness())
+                .notes(request.getNotes())
+                .build();
+        member = memberRepository.save(member);
+
+        // 4. Membership anlegen (User <-> Organization mit Rolle PLAYER)
+        Membership membership = Membership.builder()
+                .userId(user.getId())
+                .orgId(orgId)
+                .role(UserRole.PLAYER)
+                .status("active")
+                .build();
+        membershipRepository.save(membership);
+
         return toResponse(member);
     }
 
