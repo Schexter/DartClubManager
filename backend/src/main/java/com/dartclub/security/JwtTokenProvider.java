@@ -72,6 +72,13 @@ public class JwtTokenProvider {
     }
 
     /**
+     * Alias für getUserIdFromToken
+     */
+    public UUID extractUserId(String token) {
+        return getUserIdFromToken(token);
+    }
+
+    /**
      * Extrahiert Organization ID aus Token
      */
     public UUID getOrgIdFromToken(String token) {

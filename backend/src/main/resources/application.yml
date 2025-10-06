@@ -1,0 +1,47 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: dartclub-backend
+
+  docker:
+    compose:
+      enabled: false
+
+  web:
+    locale: de_DE
+    locale-resolver: fixed
+  jackson:
+    locale: de_DE
+    time-zone: Europe/Berlin
+
+  datasource:
+    url: jdbc:postgresql://localhost:5434/dartclub?sslmode=disable&preferQueryMode=simple
+    username: dartclub_user
+    password: dartclub_password
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        default_schema: public
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+jwt:
+  secret: "Y2hhbmdldGhpc2lucHJvZHVjdGlvbnRvYXZlcnlsb25nYW5kc2VjdXJlc2VjcmV0a2V5dGhhdGlzYXRsZWFzdDI1NmJpdHNsb25nZm9ySFMyNTY="
+  expiration: 86400000

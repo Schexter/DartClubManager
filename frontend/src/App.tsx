@@ -3,13 +3,21 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import LandingPage from './features/landing/LandingPage';
 import LoginScreen from './features/auth/LoginScreen';
 import RegisterScreen from './features/auth/RegisterScreen';
-import DashboardScreen from './features/dashboard/DashboardScreen';
+import DashboardWrapper from './features/dashboard/DashboardWrapper';
+import CreateOrganizationScreen from './features/organization/CreateOrganizationScreen';
+import JoinOrganizationScreen from './features/organization/JoinOrganizationScreen';
 import { MemberListScreen, MemberFormScreen, MemberDetailScreen } from './features/members';
+import { CreateMemberScreen } from './features/members/CreateMemberScreen';
 import { TeamListScreen } from './features/teams/TeamListScreen';
-import { MatchListScreen } from './features/matches/MatchListScreen';
+import MatchListScreen from './features/matches/MatchListScreen';
 import LiveScoringScreen from './features/matches/LiveScoringScreen';
 import { EventListScreen } from './features/events/EventListScreen';
+import { FeeListScreen } from './features/fees/FeeListScreen';
 import { StatisticsScreen } from './features/statistics/StatisticsScreen';
+import { SettingsScreen } from './features/settings/SettingsScreen';
+import ImpressumScreen from './features/legal/ImpressumScreen';
+import DatenschutzScreen from './features/legal/DatenschutzScreen';
+import AgbScreen from './features/legal/AgbScreen';
 import './index.css';
 
 function App() {
@@ -22,15 +30,33 @@ function App() {
         <Route path="/register" element={<RegisterScreen />} />
         
         {/* Protected Routes */}
-        <Route 
-          path="/dashboard" 
+        <Route
+          path="/dashboard"
           element={
             <ProtectedRoute>
-              <DashboardScreen />
+              <DashboardWrapper />
             </ProtectedRoute>
-          } 
+          }
         />
-        
+
+        {/* Organization */}
+        <Route
+          path="/organization/create"
+          element={
+            <ProtectedRoute>
+              <CreateOrganizationScreen />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/organization/join"
+          element={
+            <ProtectedRoute>
+              <JoinOrganizationScreen />
+            </ProtectedRoute>
+          }
+        />
+
         {/* Members */}
         <Route 
           path="/members" 
@@ -40,13 +66,13 @@ function App() {
             </ProtectedRoute>
           } 
         />
-        <Route 
-          path="/members/new" 
+        <Route
+          path="/members/new"
           element={
             <ProtectedRoute>
-              <MemberFormScreen />
+              <CreateMemberScreen />
             </ProtectedRoute>
-          } 
+          }
         />
         <Route 
           path="/members/:id" 
@@ -66,13 +92,13 @@ function App() {
         />
         
         {/* Teams */}
-        <Route 
-          path="/teams" 
+        <Route
+          path="/teams"
           element={
             <ProtectedRoute>
               <TeamListScreen />
             </ProtectedRoute>
-          } 
+          }
         />
         
         {/* Matches */}
@@ -94,24 +120,49 @@ function App() {
         />
         
         {/* Events */}
-        <Route 
-          path="/events" 
+        <Route
+          path="/events"
           element={
             <ProtectedRoute>
               <EventListScreen />
             </ProtectedRoute>
-          } 
+          }
         />
-        
+
+        {/* Fees */}
+        <Route
+          path="/fees"
+          element={
+            <ProtectedRoute>
+              <FeeListScreen />
+            </ProtectedRoute>
+          }
+        />
+
         {/* Statistics */}
-        <Route 
-          path="/statistics" 
+        <Route
+          path="/statistics"
           element={
             <ProtectedRoute>
               <StatisticsScreen />
             </ProtectedRoute>
-          } 
+          }
         />
+
+        {/* Settings */}
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <SettingsScreen />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Legal Pages - Public Routes */}
+        <Route path="/impressum" element={<ImpressumScreen />} />
+        <Route path="/datenschutz" element={<DatenschutzScreen />} />
+        <Route path="/agb" element={<AgbScreen />} />
       </Routes>
     </BrowserRouter>
   );

@@ -100,17 +100,17 @@ public class AuthService {
             throw new RuntimeException("Account ist deaktiviert");
         }
 
-        // Get first membership (assume user has at least one org)
+        // Get first membership (optional - user may not have an org yet)
         Membership membership = membershipRepository.findByUserId(user.getId())
                 .stream()
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Keine Organisation gefunden"));
+                .orElse(null);
 
-        // Generate JWT Token
+        // Generate JWT Token (with or without org)
         String token = jwtTokenProvider.generateToken(
-                user.getId(), 
-                membership.getOrgId(), 
-                membership.getRole().getValue());
+                user.getId(),
+                membership != null ? membership.getOrgId() : null,
+                membership != null ? membership.getRole().getValue() : UserRole.ADMIN.getValue());
 
         // Build Response
         return AuthResponse.builder()

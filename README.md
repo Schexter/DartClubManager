@@ -1,14 +1,14 @@
-# 🎯 DartClubManager
+# 🎯 DartClub Manager
 
-**Eine umfassende Dart-Vereinsverwaltungs-Software mit Multi-Tenancy-Unterstützung**
+**Eine moderne, umfassende Dart-Vereinsverwaltungs-Software mit Multi-Tenancy-Unterstützung**
 
-[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-brightgreen.svg)](https://spring.io/projects/spring-boot)
-[![React](https://img.shields.io/badge/React-18-blue.svg)](https://reactjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue.svg)](https://www.typescriptlang.org/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue.svg)](https://www.postgresql.org/)
-[![Docker](https://img.shields.io/badge/Docker-27+-blue.svg)](https://www.docker.com/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.6-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![React](https://img.shields.io/badge/React-18.3-blue.svg)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue.svg)](https://www.typescriptlang.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16.10-blue.svg)](https://www.postgresql.org/)
+[![Docker](https://img.shields.io/badge/Docker-28+-blue.svg)](https://www.docker.com/)
 
-Erstellt von Hans Hahn - Alle Rechte vorbehalten
+**Erstellt von Hans Hahn - Alle Rechte vorbehalten © 2025**
 
 ---
 
@@ -33,11 +33,39 @@ DartClubManager ist eine moderne, skalierbare Web-Anwendung zur Verwaltung von D
 
 ## ✨ Features
 
-- **Mitgliederverwaltung**
-- **Spielverwaltung** mit Live-Scoring
-- **Statistiken & Analytics**
-- **Trainingsverwaltung**
-- **Multi-Tenancy-fähig**
+### 🔐 Authentifizierung & Organisation
+- **JWT-basierte Authentifizierung** - Sichere Token-basierte Anmeldung
+- **Multi-Tenancy-Unterstützung** - Mehrere Vereine in einer Instanz
+- **Organisation erstellen/beitreten** - Flexible Organisationsverwaltung
+- **Rollenbasierte Zugriffskontrolle** - Admin, Trainer, Captain, Player
+
+### 👥 Mitgliederverwaltung
+- **Mitgliederprofile** - Vollständige Spielerdaten
+- **CSV-Import** - Massenimport von Mitgliedern
+- **Avatar-Upload** - Profilbilder hochladen
+- **Status-Verwaltung** - Aktiv/Inaktiv
+
+### 🎯 Spielverwaltung
+- **Match-Erstellung** - Spiele planen und organisieren
+- **Live-Scoring** - Echtzeit-Punktevergabe während des Spiels
+- **Set & Leg Tracking** - Detaillierte Spielverfolgung
+- **Checkout-Vorschläge** - Automatische Finish-Empfehlungen
+
+### 📊 Statistiken & Analytics
+- **Spielerstatistiken** - Durchschnitte, Checkout-Quote, Form
+- **Team-Statistiken** - Mannschaftsleistung analysieren
+- **Saisonübersicht** - Langzeitanalysen
+
+### 📅 Events & Termine
+- **Trainingsplanung** - Trainingstermine verwalten
+- **Event-Kalender** - Alle Termine auf einen Blick
+- **Benachrichtigungen** - Automatische Erinnerungen
+
+### 🎨 Design & UX
+- **Modernes UI** - Inspiriert von Linear, Vercel, Stripe
+- **Responsive Design** - Mobile-First Ansatz
+- **Dark Mode Ready** - Vorbereitet für Dunkelmodus
+- **Glassmorphism** - Moderne Designelemente
 
 ---
 
@@ -47,10 +75,15 @@ DartClubManager ist eine moderne, skalierbare Web-Anwendung zur Verwaltung von D
 
 | Technologie | Version | Verwendung |
 |---|---|---|
-| **Java** | 21 | Programmiersprache |
-| **Spring Boot** | 3.2.x | Application Framework |
-| **PostgreSQL** | 16 | Primäre Datenbank |
+| **Java** | 21.0.7 | Programmiersprache |
+| **Spring Boot** | 3.5.6 | Application Framework |
+| **Spring Security** | 6.5.5 | Authentifizierung & Autorisierung |
+| **Spring Data JPA** | 3.5.6 | ORM & Datenbankzugriff |
+| **PostgreSQL** | 16.10 | Primäre Datenbank |
 | **Flyway** | 10.x | Datenbank-Migrationen |
+| **JJWT** | 0.12.x | JWT Token Handling |
+| **Lombok** | 1.18.x | Code-Generierung |
+| **Gradle** | 8.10 | Build-Tool |
 
 ### Frontend
 
@@ -157,11 +190,14 @@ git --version
 
 ---
 
-### **Schritt 2: Repository klonen**
+### **Schritt 2: Projekt öffnen**
 
 ```bash
-git clone <repository-url>
-cd dartclub-manager
+# Navigiere zum Projektverzeichnis
+cd "C:\SoftwareEntwicklung\DartClubManager\Dart App"
+
+# oder wo auch immer dein Projekt liegt
+cd "/path/to/your/DartClubManager/Dart App"
 ```
 
 ---
@@ -170,27 +206,40 @@ cd dartclub-manager
 
 **AUTOMATISCH:** Das Backend startet PostgreSQL automatisch über Docker Compose!
 
-```bash
-cd "Dart App/backend"
+**⚠️ WICHTIG:** Docker Desktop muss laufen!
 
-# Windows:
-gradlew.bat bootRun
+```bash
+# Navigiere zum Backend-Verzeichnis
+cd backend
+
+# Windows (PowerShell):
+.\gradlew.bat bootRun
 
 # Linux/Mac:
 ./gradlew bootRun
 ```
 
-Das Backend:
-- ✅ Startet automatisch PostgreSQL via Docker Compose
-- ✅ Führt Datenbank-Migrationen aus (Flyway)
-- ✅ Stoppt PostgreSQL beim Beenden automatisch
-- ✅ Läuft auf http://localhost:8080
+**Das Backend macht automatisch:**
+1. ✅ Prüft ob Java, Docker und PostgreSQL verfügbar sind
+2. ✅ Startet PostgreSQL Container (Port 5434)
+3. ✅ Führt Datenbank-Migrationen aus (Flyway)
+4. ✅ Startet Spring Boot Server (Port 8080)
 
-**Erwartete Ausgabe:**
+**Erwartete Ausgabe beim ersten Start:**
 ```
-NAME                IMAGE                COMMAND                  SERVICE    CREATED         STATUS                   PORTS
-dartclub-postgres   postgres:16-alpine   "docker-entrypoint.s…"   postgres   10 seconds ago  Up 9 seconds (healthy)   0.0.0.0:5432->5432/tcp
+=== DartClub Manager Setup Check ===
+✓ Java Version: 21.0.7
+✓ Docker: Docker version 28.4.0
+✓ Docker Compose: Docker Compose version v2.39.4-desktop.1
+=== Setup Check abgeschlossen ===
+
+Creating dartclub-postgres-fresh ... done
+...
+Started Application in 8.155 seconds (process running for 8.641)
 ```
+
+**Backend läuft auf:** http://localhost:8080
+**PostgreSQL läuft auf:** localhost:5434
 
 ---
 
@@ -223,10 +272,23 @@ npm run dev
 ### **Erste Schritte:**
 
 1. **Öffne Browser:** http://localhost:5173
-2. **Registriere einen Account** oder nutze Test-User:
-   - E-Mail: `admin@falcons.de`
-   - Passwort: `Test123!`
-3. **Erkunde die Features!**
+
+2. **Registriere einen neuen Account:**
+   - Klicke auf "Registrieren"
+   - Gib deine Daten ein (E-Mail, Name, Passwort)
+   - Nach erfolgreicher Registrierung wirst du eingeloggt
+
+3. **Organisation erstellen:**
+   - Du siehst den Onboarding-Screen
+   - Wähle "Organisation gründen"
+   - Gib Namen, Slug und Farben ein
+   - Klicke auf "Organisation gründen"
+
+4. **Erkunde die Features!**
+   - Dashboard mit Übersicht
+   - Mitglieder verwalten
+   - Matches erstellen
+   - Live-Scoring nutzen
 
 ### **API-Dokumentation:**
 
@@ -267,21 +329,41 @@ test: Add unit tests for AuthService
 
 ### **Problem: "Port 8080 already in use"**
 
-```bash
+**Windows:**
+```powershell
 # Prüfe, was auf Port 8080 läuft
 netstat -ano | findstr :8080
 
-# Stoppe Backend
-# Ändere Port in application.yml: server.port=8081
+# Finde Prozess-ID und beende ihn
+taskkill /PID <PID> /F
+
+# ODER: Ändere Port in application.yml
+server.port=8081
 ```
 
-### **Problem: "Port 5432 already in use"**
+**Linux/Mac:**
+```bash
+# Prüfe, was auf Port 8080 läuft
+lsof -i :8080
+
+# Beende Prozess
+kill -9 <PID>
+```
+
+### **Problem: "Port 5434 already in use"**
 
 ```bash
-# Stoppe andere PostgreSQL-Instanz oder
-# Ändere Port in compose.yaml:
+# Stoppe andere PostgreSQL-Instanz
+docker compose -f compose.yaml down
+
+# ODER: Ändere Port in compose.yaml und application.yml
+# compose.yaml:
 ports:
-  - '5433:5432'
+  - '5435:5432'
+
+# application.yml:
+datasource:
+  url: jdbc:postgresql://localhost:5435/dartclub
 ```
 
 ### **Problem: Docker Container startet nicht**
@@ -307,6 +389,70 @@ docker compose up -d
 
 # Backend neu starten
 ./gradlew bootRun
+```
+
+---
+
+## ❓ Häufig gestellte Fragen (FAQ)
+
+### **Wie stoppe ich die Anwendung?**
+
+**Backend stoppen:**
+- Im Terminal: `Strg+C` (Windows) oder `Cmd+C` (Mac)
+- PostgreSQL wird automatisch gestoppt
+
+**Frontend stoppen:**
+- Im Terminal: `Strg+C` (Windows) oder `Cmd+C` (Mac)
+
+### **Wo finde ich die Datenbank?**
+
+Die PostgreSQL-Datenbank läuft in Docker:
+- **Host:** localhost
+- **Port:** 5434
+- **Datenbank:** dartclub
+- **User:** dartclub_user
+- **Passwort:** dartclub_password
+
+**Mit pgAdmin verbinden:**
+1. Öffne pgAdmin
+2. Rechtsklick auf "Servers" → "Register" → "Server"
+3. Name: `DartClub Local`
+4. Connection: Host=`localhost`, Port=`5434`, Database=`dartclub`
+5. Username: `dartclub_user`, Password: `dartclub_password`
+
+### **Wie setze ich die Datenbank zurück?**
+
+```bash
+# Stoppe Backend (Strg+C)
+
+# Lösche alle Daten und Container
+cd backend
+docker compose -f compose.yaml down -v
+
+# Starte Backend neu (erstellt neue DB)
+.\gradlew.bat bootRun  # Windows
+./gradlew bootRun      # Linux/Mac
+```
+
+### **Kann ich mehrere Organisationen haben?**
+
+Ja! Das System ist Multi-Tenancy-fähig:
+- Ein User kann mehreren Organisationen beitreten
+- Jede Organisation hat eigene Daten (Mitglieder, Matches, etc.)
+- Der JWT-Token enthält die aktuelle Organisation
+
+### **Wo werden die Logs gespeichert?**
+
+**Backend-Logs:**
+- Terminal-Ausgabe (während Backend läuft)
+- Optional: `backend/logs/` (falls konfiguriert)
+
+**Frontend-Logs:**
+- Browser Console (F12 → Console)
+
+**PostgreSQL-Logs:**
+```bash
+docker compose -f compose.yaml logs postgres
 ```
 
 ---

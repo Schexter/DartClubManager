@@ -1,0 +1,9 @@
+# Spring Profile: local
+# Für Development mit lokaler PostgreSQL-Installation (ohne Docker)
+#
+# Aktivieren mit: --spring.profiles.active=local
+# z.B.: gradlew bootRun --args='--spring.profiles.active=local'
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/dartclub

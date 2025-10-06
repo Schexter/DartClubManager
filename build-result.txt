@@ -1,0 +1,9 @@
+
+> Task :backend:compileJava
+Hinweis: C:\SoftwareEntwicklung\DartClubManager\Dart App\backend\src\main\java\com\dartclub\security\JwtTokenProvider.java verwendet oder überschreibt eine veraltete API.
+Hinweis: Wiederholen Sie die Kompilierung mit -Xlint:deprecation, um Details zu erhalten.
+
+[Incubating] Problems report is available at: file:///C:/SoftwareEntwicklung/DartClubManager/Dart%20App/build/reports/problems/problems-report.html
+
+BUILD SUCCESSFUL in 5s
+1 actionable task: 1 executed

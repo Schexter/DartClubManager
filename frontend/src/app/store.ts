@@ -9,6 +9,7 @@ import authReducer from '../features/auth/authSlice';
 import membersReducer from '../features/members/membersSlice';
 import teamsReducer from '../features/teams/teamsSlice';
 import matchesReducer from '../features/matches/matchesSlice';
+import organizationReducer from '../features/organization/organizationSlice';
 
 export const store = configureStore({
   reducer: {
@@ -16,6 +17,7 @@ export const store = configureStore({
     members: membersReducer,
     teams: teamsReducer,
     matches: matchesReducer,
+    organization: organizationReducer,
   },
   // Middleware für besseres Debugging (optional)
   middleware: (getDefaultMiddleware) =>
