@@ -59,8 +59,14 @@ public class MatchController {
 
         log.info("GET /api/matches - orgId: {}", orgId);
 
-        List<Match> matches = matchService.getAllMatches(orgId);
-        return ResponseEntity.ok(matches);
+        try {
+            List<Match> matches = matchService.getAllMatches(orgId);
+            log.info("Returning {} matches", matches.size());
+            return ResponseEntity.ok(matches);
+        } catch (Exception e) {
+            log.error("Fehler beim Laden der Matches für orgId: {}", orgId, e);
+            throw e;
+        }
     }
 
     /**
@@ -97,11 +103,16 @@ public class MatchController {
             throw new RuntimeException("Organization ID nicht gefunden. Bitte neu einloggen.");
         }
 
-        log.info("POST /api/matches - orgId: {}", orgId);
+        log.info("POST /api/matches - orgId: {}, matchData: {}", orgId, match);
 
-        match.setOrgId(orgId);
-        Match created = matchService.createMatch(match);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        try {
+            match.setOrgId(orgId);
+            Match created = matchService.createMatch(match);
+            return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        } catch (Exception e) {
+            log.error("Fehler beim Erstellen des Matches", e);
+            throw e;
+        }
     }
 
     /**

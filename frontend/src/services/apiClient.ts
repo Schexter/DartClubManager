@@ -10,13 +10,17 @@ const apiClient = axios.create({
   },
 });
 
-// Optional: Interceptor hinzufügen, um den JWT-Token bei jeder Anfrage mitzusenden
+// Interceptor hinzufügen, um den JWT-Token und Org-ID bei jeder Anfrage mitzusenden
 apiClient.interceptors.request.use(
   (config) => {
-    // Hier würde die Logik stehen, um den Token aus dem State (z.B. Redux) zu holen
-    const token = localStorage.getItem('authToken'); // Beispiel: Token aus dem LocalStorage
+    const token = localStorage.getItem('token');
+    const orgId = localStorage.getItem('currentOrgId');
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    if (orgId) {
+      config.headers['X-Org-Id'] = orgId;
     }
     return config;
   },

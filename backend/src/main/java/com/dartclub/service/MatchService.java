@@ -177,8 +177,9 @@ public class MatchService {
                 }
                 if (awayPlayer == null) {
                     // Nimm einen anderen Spieler als homePlayer
+                    final UUID homePlayerId = homePlayer.getId();
                     awayPlayer = members.stream()
-                            .filter(m -> !m.getId().equals(homePlayer.getId()))
+                            .filter(m -> !m.getId().equals(homePlayerId))
                             .findFirst()
                             .orElse(members.get(1));
                 }
@@ -193,23 +194,45 @@ public class MatchService {
     }
 
     /**
+     * Aktuelles Leg eines Matches holen
+     */
+    public Leg getCurrentLeg(UUID matchId, UUID orgId) {
+        Match match = getMatchById(matchId, orgId);
+
+        // Hole das neueste Set des Matches
+        List<Set> sets = setRepository.findByMatchIdOrderBySetNoDesc(matchId);
+        if (sets.isEmpty()) {
+            throw new IllegalStateException("Match hat noch keine Sets");
+        }
+
+        Set currentSet = sets.get(0); // Neuestes Set
+
+        // Hole das neueste nicht-beendete Leg des Sets
+        List<Leg> legs = legRepository.findBySetIdOrderByLegNoAsc(currentSet.getId());
+        return legs.stream()
+                .filter(leg -> leg.getFinishedAt() == null)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Kein aktives Leg gefunden"));
+    }
+
+    /**
      * Match beenden
      */
     @Transactional
     public Match finalizeMatch(UUID matchId, UUID orgId) {
         Match match = getMatchById(matchId, orgId);
-        
+
         if (match.getStatus() != MatchStatus.LIVE) {
             throw new IllegalStateException("Nur LIVE Matches können beendet werden");
         }
-        
+
         match.setStatus(MatchStatus.FINISHED);
         match.setFinishedAt(ZonedDateTime.now());
         match = matchRepository.save(match);
-        
-        log.info("Match {} beendet. Ergebnis: {} : {} Sets", 
+
+        log.info("Match {} beendet. Ergebnis: {} : {} Sets",
                 matchId, match.getHomeSets(), match.getAwaySets());
-        
+
         return match;
     }
 

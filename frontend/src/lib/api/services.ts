@@ -391,9 +391,9 @@ export const matchService = {
   /**
    * Submit Throw
    */
-  submitThrow: async (matchId: string, legId: string, data: CreateThrowRequest): Promise<Throw> => {
+  submitThrow: async (matchId: string, data: CreateThrowRequest): Promise<Throw> => {
     const response = await apiClient.post<Throw>(
-      API_ENDPOINTS.MATCHES.THROWS(matchId, legId),
+      API_ENDPOINTS.MATCHES.THROWS(matchId),
       data
     );
     return response.data;

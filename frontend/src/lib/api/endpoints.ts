@@ -66,7 +66,7 @@ const API_ENDPOINTS = {
     FINALIZE: (id: string) => `/matches/${id}/finalize`,
     LINEUP: (id: string) => `/matches/${id}/lineup`,
     LEGS: (id: string) => `/matches/${id}/legs`,
-    THROWS: (matchId: string, legId: string) => `/matches/${matchId}/legs/${legId}/throws`,
+    THROWS: (matchId: string) => `/matches/${matchId}/throws`,
     STATISTICS: (id: string) => `/matches/${id}/statistics`,
     PDF: (id: string) => `/matches/${id}/pdf`,
   },

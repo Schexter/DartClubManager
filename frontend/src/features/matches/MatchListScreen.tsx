@@ -1,246 +1,221 @@
-// DartClub Manager - Match List Screen
-// Erstellt von Hans Hahn - Alle Rechte vorbehalten
+/**
+ * MatchListScreen.tsx - Übersicht aller Matches
+ * 
+ * Features:
+ * - Liste aller Matches (kommende + vergangene)
+ * - Filter nach Status (SCHEDULED, LIVE, FINISHED)
+ * - Navigation zu Match-Details & Live-Scoring
+ * - Neues Match erstellen
+ * 
+ * @author Hans Hahn - Alle Rechte vorbehalten
+ */
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Calendar, Trophy, MapPin } from 'lucide-react';
 import { AppLayout } from '../../components/layout';
-import { apiClient } from '../../lib/api/client';
+import { useAppDispatch, useAppSelector } from '../../app/hooks';
+import { fetchMatches, clearError, Match } from './matchesSlice';
 
-interface Match {
-  id: string;
-  homeTeam: string;
-  awayTeam: string;
-  date: string;
-  time: string;
-  venue: string;
-  league: string;
-  status: 'scheduled' | 'live' | 'finished';
-  homeScore?: number;
-  awayScore?: number;
-}
-
-export default function MatchListScreen() {
+export function MatchListScreen() {
   const navigate = useNavigate();
-  const [matches, setMatches] = useState<Match[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const dispatch = useAppDispatch();
+  const { matches, isLoading, error } = useAppSelector(state => state.matches);
+  const [filter, setFilter] = useState<'ALL' | 'SCHEDULED' | 'LIVE' | 'FINISHED'>('ALL');
 
   useEffect(() => {
-    loadMatches();
-  }, []);
+    dispatch(fetchMatches());
+  }, [dispatch]);
 
-  const loadMatches = async () => {
-    try {
-      setIsLoading(true);
-      const response = await apiClient.get('/matches');
-      setMatches(response.data);
-    } catch (error) {
-      console.error('Fehler beim Laden der Matches:', error);
-      setMatches([]);
-    } finally {
-      setIsLoading(false);
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        dispatch(clearError());
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [error, dispatch]);
+
+  const filteredMatches = matches.filter(match => {
+    if (filter === 'ALL') return true;
+    return match.status === filter;
+  });
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'SCHEDULED':
+        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+      case 'LIVE':
+        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 animate-pulse';
+      case 'FINISHED':
+        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+      default:
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
     }
   };
 
-  const filteredMatches = matches.filter((match) => {
-    if (filterStatus === 'all') return true;
-    return match.status === filterStatus;
-  });
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'SCHEDULED':
+        return 'Geplant';
+      case 'LIVE':
+        return '🔴 LIVE';
+      case 'FINISHED':
+        return 'Beendet';
+      default:
+        return status;
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('de-DE', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(date);
+  };
+
+  if (isLoading && matches.length === 0) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Matches</h1>
-          <p className="text-gray-600 mt-1">
-            {filteredMatches.length} {filteredMatches.length === 1 ? 'Match' : 'Matches'}
-          </p>
-        </div>
-        <button
-          onClick={() => navigate('/matches/new')}
-          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors font-medium flex items-center space-x-2"
-        >
-          <Plus size={20} />
-          <span>Neues Match</span>
-        </button>
-      </div>
-
-      {/* Filter Tabs */}
-      <div className="flex space-x-2 overflow-x-auto pb-2 mb-6">
-        <FilterButton 
-          label="Alle" 
-          active={filterStatus === 'all'} 
-          onClick={() => setFilterStatus('all')}
-        />
-        <FilterButton 
-          label="Live" 
-          active={filterStatus === 'live'} 
-          onClick={() => setFilterStatus('live')}
-        />
-        <FilterButton 
-          label="Geplant" 
-          active={filterStatus === 'scheduled'} 
-          onClick={() => setFilterStatus('scheduled')}
-        />
-        <FilterButton 
-          label="Beendet" 
-          active={filterStatus === 'finished'} 
-          onClick={() => setFilterStatus('finished')}
-        />
-      </div>
-
-      {/* Loading State */}
-      {isLoading && (
-        <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-blue-600"></div>
-          <p className="text-gray-600 mt-2">Lädt Matches...</p>
-        </div>
-      )}
-
-      {/* Empty State */}
-      {!isLoading && filteredMatches.length === 0 && (
-        <div className="bg-white rounded-lg shadow-md p-12 text-center">
-          <div className="text-6xl mb-4">🎯</div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {filterStatus === 'all' ? 'Noch keine Matches' : `Keine ${filterStatus === 'live' ? 'Live-' : filterStatus === 'scheduled' ? 'geplanten' : 'beendeten'} Matches`}
-          </h3>
-          <p className="text-gray-600 mb-4">
-            {filterStatus === 'all' 
-              ? 'Erstelle dein erstes Match!' 
-              : 'Versuche einen anderen Filter'
-            }
-          </p>
-          {filterStatus === 'all' && (
+      <div className="bg-white dark:bg-gray-800 shadow mb-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex justify-between items-center">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Matches</h1>
             <button
               onClick={() => navigate('/matches/new')}
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors"
             >
-              Match erstellen
+              + Neues Match
             </button>
-          )}
+          </div>
         </div>
-      )}
-
-      {/* Match List */}
-      {!isLoading && filteredMatches.length > 0 && (
-        <div className="space-y-4">
-          {filteredMatches.map((match) => (
-            <MatchCard
-              key={match.id}
-              match={match}
-              onClick={() => {
-                // Live Matches -> Live Scoring
-                if (match.status === 'live') {
-                  navigate(`/matches/${match.id}/scoring`);
-                } else {
-                  // Andere Matches -> Detail View
-                  navigate(`/matches/${match.id}`);
-                }
-              }}
-            />
-          ))}
-        </div>
-      )}
-    </AppLayout>
-  );
-}
-
-// Filter Button
-function FilterButton({ 
-  label, 
-  active = false,
-  onClick 
-}: { 
-  label: string; 
-  active?: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`px-4 py-2 rounded-full font-medium whitespace-nowrap transition-colors ${
-        active
-          ? 'bg-blue-600 text-white'
-          : 'bg-white text-gray-700 hover:bg-gray-100'
-      }`}
-    >
-      {label}
-    </button>
-  );
-}
-
-// Match Card Component
-function MatchCard({ match, onClick }: { match: Match; onClick: () => void }) {
-  const getStatusBadge = () => {
-    switch (match.status) {
-      case 'live':
-        return (
-          <span className="flex items-center space-x-1 bg-red-600 text-white text-xs px-2 py-1 rounded-full animate-pulse">
-            <span className="w-2 h-2 bg-white rounded-full"></span>
-            <span>LIVE</span>
-          </span>
-        );
-      case 'scheduled':
-        return (
-          <span className="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full">
-            📅 Geplant
-          </span>
-        );
-      case 'finished':
-        return (
-          <span className="bg-green-600 text-white text-xs px-2 py-1 rounded-full">
-            ✓ Beendet
-          </span>
-        );
-    }
-  };
-
-  return (
-    <div
-      onClick={onClick}
-      className={`bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all cursor-pointer hover:scale-[1.01] ${
-        match.status === 'live' ? 'border-2 border-red-600' : ''
-      }`}
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center space-x-2 text-sm text-gray-600">
-          <Trophy size={16} />
-          <span className="font-medium">{match.league}</span>
-        </div>
-        {getStatusBadge()}
       </div>
 
-      {/* Teams & Score */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex-1">
-          <p className="font-bold text-lg text-gray-900">{match.homeTeam}</p>
-          <p className="text-gray-600">{match.awayTeam}</p>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-4">
+            <p className="text-red-800 dark:text-red-200">{error}</p>
+          </div>
+        )}
+
+        {/* Filter Tabs */}
+        <div className="mb-6">
+          <div className="flex space-x-2 border-b border-gray-200 dark:border-gray-700">
+            {(['ALL', 'SCHEDULED', 'LIVE', 'FINISHED'] as const).map((status) => (
+              <button
+                key={status}
+                onClick={() => setFilter(status)}
+                className={`px-4 py-2 font-medium transition-colors ${
+                  filter === status
+                    ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                }`}
+              >
+                {status === 'ALL' ? 'Alle' : status === 'SCHEDULED' ? 'Geplant' : status === 'LIVE' ? 'Live' : 'Beendet'}
+              </button>
+            ))}
+          </div>
         </div>
-        {match.status !== 'scheduled' && (
-          <div className="text-right">
-            <p className="text-3xl font-bold text-blue-600">
-              {match.homeScore} : {match.awayScore}
-            </p>
+
+        {/* Matches List */}
+        {filteredMatches.length === 0 ? (
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-8 text-center">
+            <p className="text-gray-500 dark:text-gray-400">Keine Matches gefunden</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {filteredMatches.map((match) => (
+              <div
+                key={match.id}
+                onClick={() => navigate(`/matches/${match.id}`)}
+                className="bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer p-6"
+              >
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    {/* Match Info */}
+                    <div className="flex items-center space-x-3 mb-2">
+                      <span
+                        className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(match.status)}`}
+                      >
+                        {getStatusLabel(match.status)}
+                      </span>
+                      {match.league && (
+                        <span className="text-sm text-gray-500 dark:text-gray-400">
+                          🏆 {match.league}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Teams/Score */}
+                    <div className="text-xl font-semibold text-gray-900 dark:text-white mb-1">
+                      {match.homeTeamId ? `Team ${match.homeTeamId}` : 'Heim'} vs.{' '}
+                      {match.awayTeamId ? `Team ${match.awayTeamId}` : 'Auswärts'}
+                    </div>
+
+                    {match.status !== 'SCHEDULED' && (
+                      <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                        {match.homeSets} : {match.awaySets}
+                      </div>
+                    )}
+
+                    {/* Date & Venue */}
+                    <div className="mt-2 flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
+                      <span>📅 {formatDate(match.matchDate)}</span>
+                      {match.venue && <span>📍 {match.venue}</span>}
+                    </div>
+                  </div>
+
+                  {/* Action Button */}
+                  <div>
+                    {match.status === 'SCHEDULED' && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/matches/${match.id}/scoring`);
+                        }}
+                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-medium transition-colors"
+                      >
+                        Match starten
+                      </button>
+                    )}
+                    {match.status === 'LIVE' && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/matches/${match.id}/scoring`);
+                        }}
+                        className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md font-medium transition-colors animate-pulse"
+                      >
+                        Live-Scoring
+                      </button>
+                    )}
+                    {match.status === 'FINISHED' && (
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                        Abgeschlossen
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
-
-      {/* Info */}
-      <div className="flex items-center justify-between text-sm text-gray-600 pt-3 border-t">
-        <div className="flex items-center space-x-1">
-          <Calendar size={16} />
-          <span>
-            {match.date} • {match.time}
-          </span>
-        </div>
-        <div className="flex items-center space-x-1">
-          <MapPin size={16} />
-          <span>{match.venue}</span>
-        </div>
-      </div>
-    </div>
+    </AppLayout>
   );
 }

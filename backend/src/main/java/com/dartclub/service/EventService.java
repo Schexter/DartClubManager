@@ -3,6 +3,7 @@ package com.dartclub.service;
 import com.dartclub.exception.ResourceNotFoundException;
 import com.dartclub.model.entity.Event;
 import com.dartclub.model.entity.EventParticipant;
+import com.dartclub.model.entity.Match;
 import com.dartclub.model.entity.Member;
 import com.dartclub.model.enums.EventType;
 import com.dartclub.repository.EventParticipantRepository;
@@ -37,6 +38,7 @@ public class EventService {
     private final EventRepository eventRepository;
     private final EventParticipantRepository participantRepository;
     private final MemberRepository memberRepository;
+    private final MatchService matchService;
 
     /**
      * Findet alle Events eines Vereins
@@ -150,7 +152,135 @@ public class EventService {
         
         Event savedEvent = eventRepository.save(event);
         log.info("Event created successfully: {}", savedEvent.getId());
+        
+        // Bei MATCH oder FRIENDLY_MATCH: Automatisch Match erstellen
+        if (event.getEventType() == EventType.MATCH || event.getEventType() == EventType.FRIENDLY_MATCH) {
+            createMatchesForEvent(savedEvent);
+        }
+        
         return savedEvent;
+    }
+
+    /**
+     * Erstellt automatisch Matches für ein Event
+     * 
+     * Logik:
+     * - Bei Team-basiertem Event: Erstelle Match zwischen den Teams
+     * - Bei Einzel-Event: Erstelle Matches aus Participants (Paare bilden)
+     */
+    @Transactional
+    protected void createMatchesForEvent(Event event) {
+        log.info("Creating matches for event: {}", event.getId());
+        
+        // Hole alle Participants die zugesagt haben (Status = YES)
+        List<EventParticipant> participants = participantRepository.findByEventId(event.getId())
+                .stream()
+                .filter(p -> "YES".equals(p.getStatus()))
+                .toList();
+        
+        if (participants.isEmpty()) {
+            log.warn("Keine Teilnehmer für Event {}. Erstelle Platzhalter-Match.", event.getId());
+            createPlaceholderMatch(event);
+            return;
+        }
+        
+        // Team-basiert: Erstelle 1 Match zwischen den Teams
+        if (event.getTeamId() != null) {
+            createTeamMatch(event);
+        } else {
+            // Einzel: Bilde Paare aus Participants
+            createIndividualMatches(event, participants);
+        }
+    }
+    
+    /**
+     * Erstellt ein Team-Match (Heim vs. Auswärts)
+     */
+    private void createTeamMatch(Event event) {
+        log.info("Creating team match for event: {}", event.getId());
+        
+        // Für Team-Matches sollte der Event zwei Teams haben
+        // In unserem Fall: TeamId ist das Heim-Team, Gegner muss separat angegeben werden
+        // Vorerst: Erstelle Match mit einem Team, zweites Team kann später hinzugefügt werden
+        
+        Match match = Match.builder()
+                .orgId(event.getOrgId())
+                .matchDate(event.getStartTime())
+                .venue(event.getLocation())
+                .league(event.getTitle()) // Event-Titel als Liga
+                .matchType(event.getEventType() == EventType.MATCH ? "league" : "friendly")
+                .homeTeamId(event.getTeamId())
+                .awayTeamId(null) // Muss später gesetzt werden
+                .bestOfSets(3) // Standard: Best of 3 Sets
+                .bestOfLegs(5) // Standard: Best of 5 Legs
+                .startingScore(501) // Standard: 501
+                .doubleOut(true) // Standard: Double-Out
+                .build();
+        
+        Match createdMatch = matchService.createMatch(match);
+        log.info("Team match created: {} for event: {}", createdMatch.getId(), event.getId());
+    }
+    
+    /**
+     * Erstellt Einzel-Matches aus Participants (paarweise)
+     */
+    private void createIndividualMatches(Event event, List<EventParticipant> participants) {
+        log.info("Creating individual matches for event: {} with {} participants", 
+                event.getId(), participants.size());
+        
+        if (participants.size() < 2) {
+            log.warn("Nicht genug Teilnehmer für Matches. Benötigt: 2, Vorhanden: {}", participants.size());
+            createPlaceholderMatch(event);
+            return;
+        }
+        
+        // Bilde Paare: Spieler 1 vs Spieler 2, Spieler 3 vs Spieler 4, etc.
+        for (int i = 0; i < participants.size() - 1; i += 2) {
+            UUID player1Id = participants.get(i).getMemberId();
+            UUID player2Id = participants.get(i + 1).getMemberId();
+            
+            Match match = Match.builder()
+                    .orgId(event.getOrgId())
+                    .matchDate(event.getStartTime())
+                    .venue(event.getLocation())
+                    .league(event.getTitle())
+                    .matchType(event.getEventType() == EventType.MATCH ? "league" : "friendly")
+                    .homeTeamId(null) // Keine Teams bei Einzel
+                    .awayTeamId(null)
+                    .bestOfSets(3)
+                    .bestOfLegs(5)
+                    .startingScore(501)
+                    .doubleOut(true)
+                    .build();
+            
+            Match createdMatch = matchService.createMatch(match);
+            log.info("Individual match created: {} for event: {} ({} vs {})", 
+                    createdMatch.getId(), event.getId(), player1Id, player2Id);
+        }
+    }
+    
+    /**
+     * Erstellt ein Platzhalter-Match wenn noch keine Participants vorhanden sind
+     */
+    private void createPlaceholderMatch(Event event) {
+        log.info("Creating placeholder match for event: {}", event.getId());
+        
+        Match match = Match.builder()
+                .orgId(event.getOrgId())
+                .matchDate(event.getStartTime())
+                .venue(event.getLocation())
+                .league(event.getTitle())
+                .matchType(event.getEventType() == EventType.MATCH ? "league" : "friendly")
+                .homeTeamId(event.getTeamId())
+                .awayTeamId(null)
+                .bestOfSets(3)
+                .bestOfLegs(5)
+                .startingScore(501)
+                .doubleOut(true)
+                .build();
+        
+        Match createdMatch = matchService.createMatch(match);
+        log.info("Placeholder match created: {} for event: {}", createdMatch.getId(), event.getId());
     }
 
     /**

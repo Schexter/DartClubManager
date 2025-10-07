@@ -9,10 +9,10 @@ import JoinOrganizationScreen from './features/organization/JoinOrganizationScre
 import { MemberListScreen, MemberFormScreen, MemberDetailScreen } from './features/members';
 import { CreateMemberScreen } from './features/members/CreateMemberScreen';
 import { TeamListScreen, TeamFormScreen } from './features/teams';
-import MatchListScreen from './features/matches/MatchListScreen';
+import { MatchListScreen } from './features/matches/MatchListScreen';
 import { MatchFormScreen } from './features/matches/MatchFormScreen';
 import { MatchDetailScreen } from './features/matches/MatchDetailScreen';
-import LiveScoringScreen from './features/matches/LiveScoringScreen';
+import LiveScoringScreen from './features/matches/LiveScoringScreenNew';
 import { EventListScreen } from './features/events/EventListScreen';
 import { EventFormScreen } from './features/events/EventFormScreen';
 import { EventDetailScreen } from './features/events/EventDetailScreen';

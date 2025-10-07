@@ -26,11 +26,12 @@ import java.util.UUID;
 
 /**
  * ScoringController - Live-Scoring API
- * 
+ *
  * Endpoints:
+ * - GET  /api/matches/{matchId}/current-leg - Aktuelles Leg abrufen
  * - POST /api/matches/{matchId}/throws - Wurf eintragen
  * - POST /api/matches/{matchId}/bust   - Bust markieren
- * 
+ *
  * @author Hans Hahn - Alle Rechte vorbehalten
  */
 @RestController
@@ -53,7 +54,32 @@ public class ScoringController {
         UUID orgId = (UUID) request.getAttribute("orgId");
         return orgId != null ? orgId : headerOrgId;
     }
-    
+
+    /**
+     * Aktuelles Leg eines Matches abrufen
+     *
+     * GET /api/matches/{matchId}/current-leg
+     */
+    @GetMapping("/{matchId}/current-leg")
+    public ResponseEntity<LiveScoringLegDTO> getCurrentLeg(
+            HttpServletRequest servletRequest,
+            @RequestHeader(value = "X-Org-Id", required = false) UUID headerOrgId,
+            @PathVariable UUID matchId) {
+
+        UUID orgId = getOrgId(servletRequest, headerOrgId);
+        if (orgId == null) {
+            throw new RuntimeException("Organization ID nicht gefunden. Bitte neu einloggen.");
+        }
+
+        log.info("GET /api/matches/{}/current-leg - orgId: {}", matchId, orgId);
+
+        // Hole das aktuelle Leg über MatchService
+        Leg currentLeg = matchService.getCurrentLeg(matchId, orgId);
+
+        LiveScoringLegDTO legDTO = buildLegDTO(currentLeg);
+        return ResponseEntity.ok(legDTO);
+    }
+
     /**
      * Wurf eintragen (3 Darts)
      * 

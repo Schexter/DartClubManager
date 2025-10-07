@@ -19,9 +19,14 @@ public interface SetRepository extends JpaRepository<Set, UUID> {
      * Alle Sets eines Matches
      */
     List<Set> findByMatchId(UUID matchId);
-    
+
     /**
-     * Alle Sets eines Matches sortiert nach Set-Nummer
+     * Alle Sets eines Matches sortiert nach Set-Nummer aufsteigend
      */
     List<Set> findByMatchIdOrderBySetNoAsc(UUID matchId);
+
+    /**
+     * Alle Sets eines Matches sortiert nach Set-Nummer absteigend
+     */
+    List<Set> findByMatchIdOrderBySetNoDesc(UUID matchId);
 }
