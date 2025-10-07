@@ -31,6 +31,23 @@ public class MemberResponse {
     private String licenseNo;
     private String handedness;
     private String notes;
+    private String role;
+    private String status;
+    private LocalDate joinedAt;
+    private java.util.List<TeamSummary> teams; // Teams des Mitglieds
     private ZonedDateTime createdAt;
     private ZonedDateTime updatedAt;
+
+    /**
+     * Nested DTO für Team-Übersicht beim Member
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class TeamSummary {
+        private UUID id;
+        private String name;
+        private String color;
+    }
 }

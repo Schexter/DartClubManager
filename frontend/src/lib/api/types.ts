@@ -19,12 +19,16 @@ export interface RegisterRequest {
   email: string;
   password: string;
   displayName: string;
+  organizationName?: string; // ⭐ Optional: Name der zu erstellenden Organisation
+  organizationSlug?: string; // ⭐ Optional: Slug der zu erstellenden Organisation
 }
 
 export interface AuthResponse {
   token: string;
   user: User;
-  organization?: Organization;
+  orgId?: string; // ⭐ Aktuelle Organisation ID
+  orgName?: string; // ⭐ Aktueller Organisationsname
+  organization?: Organization; // Deprecated, wird durch orgId/orgName ersetzt
 }
 
 export interface User {
@@ -53,6 +57,7 @@ export interface Organization {
   logoUrl?: string;
   primaryColor: string;
   secondaryColor: string;
+  role?: string; // Rolle des Users in dieser Organisation
   createdAt: string;
 }
 
@@ -69,6 +74,7 @@ export interface CreateOrganizationRequest {
 
 export interface Member {
   id: string;
+  userId?: string;
   firstName: string;
   lastName: string;
   email?: string;
@@ -80,7 +86,14 @@ export interface Member {
   role: UserRole;
   status: 'ACTIVE' | 'INACTIVE';
   joinedAt: string;
+  teams?: TeamSummary[]; // Teams des Members
   createdAt: string;
+}
+
+export interface TeamSummary {
+  id: string;
+  name: string;
+  color?: string;
 }
 
 export interface CreateMemberRequest {
@@ -103,6 +116,7 @@ export interface CreateMemberWithAccountRequest {
   password: string;
   licenseNo?: string;
   handedness?: 'LEFT' | 'RIGHT';
+  playerName?: string;
   notes?: string;
 }
 
@@ -117,11 +131,14 @@ export interface UpdateMemberRequest extends Partial<CreateMemberRequest> {
 export interface Team {
   id: string;
   name: string;
-  season: string;
+  season?: string;
+  league?: string;
+  description?: string;
+  color?: string;
   captainId?: string;
   captain?: Member;
-  members: Member[];
-  stats: TeamStats;
+  members?: Member[];
+  stats?: TeamStats;
   createdAt: string;
 }
 
@@ -134,7 +151,10 @@ export interface TeamStats {
 
 export interface CreateTeamRequest {
   name: string;
-  season: string;
+  season?: string;
+  league?: string;
+  description?: string;
+  color?: string;
   captainId?: string;
 }
 
@@ -150,8 +170,8 @@ export interface AddTeamMemberRequest {
 
 export interface Match {
   id: string;
-  homeTeamId: string;
-  awayTeamId: string;
+  homeTeamId?: string; // Optional: Matches können ohne Teams erstellt werden
+  awayTeamId?: string; // Optional: Matches können ohne Teams erstellt werden
   homeTeam?: Team;
   awayTeam?: Team;
   matchDate: string;
@@ -181,8 +201,8 @@ export enum MatchStatus {
 }
 
 export interface CreateMatchRequest {
-  homeTeamId: string;
-  awayTeamId: string;
+  homeTeamId?: string; // Optional: Für Matches ohne Teams
+  awayTeamId?: string; // Optional: Für Matches ohne Teams
   matchDate: string;
   venue?: string;
   league?: string;
@@ -327,6 +347,122 @@ export interface TeamStatistics {
   teamAverage: number;
   topScorer?: Member;
 }
+
+// ========================================
+// FEE TYPES (Beitragsverwaltung)
+// ========================================
+
+export interface Fee {
+  id: string;
+  orgId: string;
+  name: string;
+  amount: number;
+  period: FeePeriod;
+  description?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export enum FeePeriod {
+  YEARLY = 'YEARLY',
+  QUARTERLY = 'QUARTERLY',
+  MONTHLY = 'MONTHLY',
+  ONCE = 'ONCE',
+}
+
+export interface FeeAssignment {
+  id: string;
+  memberId: string;
+  memberName?: string;
+  feeId: string;
+  feeName?: string;
+  startDate: string;
+  endDate?: string;
+  status: FeeAssignmentStatus;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export enum FeeAssignmentStatus {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+  CANCELLED = 'CANCELLED',
+}
+
+export interface FeePayment {
+  id: string;
+  feeAssignmentId: string;
+  amountPaid: number;
+  paymentDate: string;
+  paymentMethod: PaymentMethod;
+  periodStart?: string;
+  periodEnd?: string;
+  referenceNumber?: string;
+  notes?: string;
+  recordedByUserId?: string;
+  recordedByUserName?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export enum PaymentMethod {
+  CASH = 'CASH',
+  BANK_TRANSFER = 'BANK_TRANSFER',
+  SEPA = 'SEPA',
+  PAYPAL = 'PAYPAL',
+  OTHER = 'OTHER',
+}
+
+export interface MemberFeeStatus {
+  memberId: string;
+  memberName: string;
+  email?: string;
+  feeId: string;
+  feeName: string;
+  feeAmount: number;
+  totalPaid: number;
+  remainingAmount: number;
+  lastPaymentDate?: string;
+  nextDueDate?: string;
+  status: 'PAID' | 'PARTIAL' | 'OPEN' | 'OVERDUE';
+  isOverdue: boolean;
+}
+
+export interface CreateFeeRequest {
+  name: string;
+  amount: number;
+  period: FeePeriod;
+  description?: string;
+  isActive?: boolean;
+}
+
+export interface UpdateFeeRequest extends Partial<CreateFeeRequest> {}
+
+export interface CreateFeeAssignmentRequest {
+  memberId: string;
+  feeId: string;
+  startDate: string;
+  endDate?: string;
+  status?: FeeAssignmentStatus;
+  notes?: string;
+}
+
+export interface UpdateFeeAssignmentRequest extends Partial<CreateFeeAssignmentRequest> {}
+
+export interface CreateFeePaymentRequest {
+  feeAssignmentId: string;
+  amountPaid: number;
+  paymentDate: string;
+  paymentMethod: PaymentMethod;
+  periodStart?: string;
+  periodEnd?: string;
+  referenceNumber?: string;
+  notes?: string;
+}
+
+export interface UpdateFeePaymentRequest extends Partial<CreateFeePaymentRequest> {}
 
 // ========================================
 // PAGINATION & FILTERS

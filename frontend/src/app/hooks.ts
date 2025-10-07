@@ -1,5 +1,5 @@
 /**
- * Redux Hooks - Type-Safe Hooks für Redux
+ * Redux Store Hooks - Typed useDispatch & useSelector
  * 
  * @author Hans Hahn - Alle Rechte vorbehalten
  */
@@ -7,8 +7,8 @@
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import type { RootState, AppDispatch } from './store';
 
-// Type-safe useDispatch Hook
+// Typed useDispatch Hook
 export const useAppDispatch = () => useDispatch<AppDispatch>();
 
-// Type-safe useSelector Hook
+// Typed useSelector Hook
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;

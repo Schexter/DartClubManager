@@ -1,10 +1,9 @@
 package com.dartclub.controller;
 
 import com.dartclub.model.dto.request.CreateOrganizationRequest;
-import com.dartclub.model.dto.request.JoinOrganizationRequest;
 import com.dartclub.model.dto.response.OrganizationResponse;
-import com.dartclub.security.JwtTokenProvider;
 import com.dartclub.service.OrganizationService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -14,58 +13,74 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * OrganizationController - REST API für Organisationen
+ * OrganizationController - REST API für Organisationsverwaltung
  * 
  * @author Hans Hahn - Alle Rechte vorbehalten
  */
 @RestController
 @RequestMapping("/api/organizations")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "*")
 public class OrganizationController {
 
     private final OrganizationService organizationService;
-    private final JwtTokenProvider jwtTokenProvider;
 
     /**
-     * Organisation erstellen
+     * Helper: Extract userId from JWT (via request attribute)
+     */
+    private UUID getUserId(HttpServletRequest request) {
+        UUID userId = (UUID) request.getAttribute("userId");
+        if (userId == null) {
+            throw new RuntimeException("User ID nicht gefunden. Bitte neu einloggen.");
+        }
+        return userId;
+    }
+
+    /**
+     * Alle Organisationen des eingeloggten Users abrufen
+     * GET /api/organizations/my-organizations
+     */
+    @GetMapping("/my-organizations")
+    public ResponseEntity<List<OrganizationResponse>> getMyOrganizations(
+            HttpServletRequest servletRequest) {
+        UUID userId = getUserId(servletRequest);
+        return ResponseEntity.ok(organizationService.getUserOrganizations(userId));
+    }
+
+    /**
+     * Einzelne Organisation abrufen
+     * GET /api/organizations/{id}
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<OrganizationResponse> getOrganizationById(
+            @PathVariable UUID id,
+            HttpServletRequest servletRequest) {
+        UUID userId = getUserId(servletRequest);
+        return ResponseEntity.ok(organizationService.getOrganizationById(id, userId));
+    }
+
+    /**
+     * Neue Organisation erstellen
      * POST /api/organizations
      */
     @PostMapping
     public ResponseEntity<OrganizationResponse> createOrganization(
-            @RequestHeader("Authorization") String token,
-            @Valid @RequestBody CreateOrganizationRequest request) {
-        
-        UUID userId = jwtTokenProvider.extractUserId(token.substring(7)); // Remove "Bearer "
-        OrganizationResponse response = organizationService.createOrganization(userId, request);
-        return ResponseEntity.ok(response);
+            @Valid @RequestBody CreateOrganizationRequest request,
+            HttpServletRequest servletRequest) {
+        UUID userId = getUserId(servletRequest);
+        return ResponseEntity.ok(organizationService.createOrganization(request, userId));
     }
 
     /**
-     * Organisation des aktuellen Users abrufen
-     * GET /api/organizations/me
+     * Organisation löschen (Nur für ADMIN)
+     * DELETE /api/organizations/{id}
      */
-    @GetMapping("/me")
-    public ResponseEntity<List<OrganizationResponse>> getMyOrganizations(
-            @RequestHeader("Authorization") String token) {
-
-        UUID userId = jwtTokenProvider.extractUserId(token.substring(7));
-        List<OrganizationResponse> organizations = organizationService.getAllOrganizationsByUserId(userId);
-
-        return ResponseEntity.ok(organizations);
-    }
-
-    /**
-     * Organisation beitreten (über Slug)
-     * POST /api/organizations/join
-     */
-    @PostMapping("/join")
-    public ResponseEntity<OrganizationResponse> joinOrganization(
-            @RequestHeader("Authorization") String token,
-            @Valid @RequestBody JoinOrganizationRequest request) {
-
-        UUID userId = jwtTokenProvider.extractUserId(token.substring(7)); // Remove "Bearer "
-        OrganizationResponse response = organizationService.joinOrganization(userId, request);
-
-        return ResponseEntity.ok(response);
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteOrganization(
+            @PathVariable UUID id,
+            HttpServletRequest servletRequest) {
+        UUID userId = getUserId(servletRequest);
+        organizationService.deleteOrganization(id, userId);
+        return ResponseEntity.noContent().build();
     }
 }

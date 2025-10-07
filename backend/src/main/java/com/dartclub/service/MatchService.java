@@ -1,6 +1,7 @@
 package com.dartclub.service;
 
 import com.dartclub.exception.ResourceNotFoundException;
+import com.dartclub.model.dto.response.*;
 import com.dartclub.model.entity.*;
 import com.dartclub.model.enums.MatchStatus;
 import com.dartclub.repository.*;
@@ -33,6 +34,8 @@ public class MatchService {
     private final SetRepository setRepository;
     private final LegRepository legRepository;
     private final ThrowRepository throwRepository;
+    private final TeamRepository teamRepository;
+    private final MemberRepository memberRepository;
     private final ScoringEngine scoringEngine;
 
     /**
@@ -107,10 +110,86 @@ public class MatchService {
         match = matchRepository.save(match);
         
         // Erstes Set erstellen
-        createSet(matchId, 1);
+        Set firstSet = createSet(matchId, 1);
+        
+        // Erstes Leg erstellen mit ersten Spielern aus den Teams
+        createFirstLeg(match, firstSet);
         
         log.info("Match {} gestartet", matchId);
         return match;
+    }
+    
+    /**
+     * Erstes Leg mit Spielern aus Teams erstellen
+     */
+    @Transactional
+    protected void createFirstLeg(Match match, Set set) {
+        Member homePlayer = null;
+        Member awayPlayer = null;
+
+        // Versuche Spieler aus den Teams zu holen
+        if (match.getHomeTeamId() != null && match.getAwayTeamId() != null) {
+            Team homeTeam = teamRepository.findById(match.getHomeTeamId()).orElse(null);
+            Team awayTeam = teamRepository.findById(match.getAwayTeamId()).orElse(null);
+
+            if (homeTeam != null && !homeTeam.getMembers().isEmpty()) {
+                homePlayer = homeTeam.getMembers().iterator().next();
+            }
+
+            if (awayTeam != null && !awayTeam.getMembers().isEmpty()) {
+                awayPlayer = awayTeam.getMembers().iterator().next();
+            }
+        }
+
+        // Fallback: Nimm die ersten beiden Mitglieder der Organisation (inklusive Gastspieler)
+        if (homePlayer == null || awayPlayer == null) {
+            // Hole ALLE Members der Organisation (status = ACTIVE, inklusive user_id = NULL für Gastspieler)
+            List<Member> members = memberRepository.findByOrgId(match.getOrgId());
+
+            if (members.isEmpty()) {
+                throw new IllegalStateException("Keine Spieler verfügbar. Bitte erstelle mindestens einen Spieler (Mitglied oder Gastspieler).");
+            }
+
+            if (members.size() < 2) {
+                // Wenn nur 1 Spieler vorhanden: Erstelle Dummy-Gastspieler
+                log.warn("Nur 1 Spieler verfügbar. Match wird mit Dummy-Gegner gestartet.");
+
+                Member dummyPlayer = Member.builder()
+                        .orgId(match.getOrgId())
+                        .firstName("Gegner")
+                        .lastName("(Platzhalter)")
+                        .role("PLAYER")
+                        .status("ACTIVE")
+                        .joinedAt(java.time.LocalDate.now())
+                        .build();
+                dummyPlayer = memberRepository.save(dummyPlayer);
+
+                if (homePlayer == null) {
+                    homePlayer = members.get(0);
+                    awayPlayer = dummyPlayer;
+                } else {
+                    awayPlayer = dummyPlayer;
+                }
+            } else {
+                // Normal: Mindestens 2 Spieler verfügbar
+                if (homePlayer == null) {
+                    homePlayer = members.get(0);
+                }
+                if (awayPlayer == null) {
+                    // Nimm einen anderen Spieler als homePlayer
+                    awayPlayer = members.stream()
+                            .filter(m -> !m.getId().equals(homePlayer.getId()))
+                            .findFirst()
+                            .orElse(members.get(1));
+                }
+            }
+        }
+
+        createLeg(set.getId(), 1, homePlayer.getId(), awayPlayer.getId(), match.getStartingScore());
+
+        log.info("Erstes Leg erstellt: {} vs {}",
+                homePlayer.getFirstName() + " " + homePlayer.getLastName(),
+                awayPlayer.getFirstName() + " " + awayPlayer.getLastName());
     }
 
     /**
@@ -298,5 +377,119 @@ public class MatchService {
     public static class MatchStats {
         private Match match;
         private List<Set> sets;
+    }
+
+    /**
+     * Live-Scoring Daten abrufen
+     */
+    public LiveScoringResponseDTO getLiveData(UUID matchId, UUID orgId) {
+        Match match = getMatchById(matchId, orgId);
+        
+        if (match.getStatus() != MatchStatus.LIVE) {
+            throw new IllegalStateException("Match ist nicht live. Bitte Match zuerst starten.");
+        }
+        
+        // Team-Namen abrufen
+        Team homeTeam = teamRepository.findById(match.getHomeTeamId())
+                .orElseThrow(() -> new ResourceNotFoundException("Home Team nicht gefunden"));
+        Team awayTeam = teamRepository.findById(match.getAwayTeamId())
+                .orElseThrow(() -> new ResourceNotFoundException("Away Team nicht gefunden"));
+        
+        // Aktuelles Set finden
+        List<Set> sets = setRepository.findByMatchIdOrderBySetNoAsc(matchId);
+        Set currentSet = sets.stream()
+                .filter(s -> !s.isFinished(match.getBestOfLegs()))
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Kein aktives Set gefunden"));
+        
+        // Aktuelles Leg finden
+        List<Leg> legs = legRepository.findBySetIdOrderByLegNoAsc(currentSet.getId());
+        Leg currentLeg = legs.stream()
+                .filter(l -> l.getFinishedAt() == null)
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Kein aktives Leg gefunden"));
+        
+        // Spieler-Daten abrufen
+        Member homeMember = memberRepository.findById(currentLeg.getHomeMemberId())
+                .orElseThrow(() -> new ResourceNotFoundException("Home Player nicht gefunden"));
+        Member awayMember = memberRepository.findById(currentLeg.getAwayMemberId())
+                .orElseThrow(() -> new ResourceNotFoundException("Away Player nicht gefunden"));
+        
+        // Würfe für Average-Berechnung
+        List<Throw> homeThrows = throwRepository.findByLegIdAndMemberIdOrderByThrowNoAsc(currentLeg.getId(), homeMember.getId());
+        List<Throw> awayThrows = throwRepository.findByLegIdAndMemberIdOrderByThrowNoAsc(currentLeg.getId(), awayMember.getId());
+        
+        Double homeAverage = calculateAverage(homeThrows);
+        Double awayAverage = calculateAverage(awayThrows);
+        
+        String homeLastThrow = getLastThrowString(homeThrows);
+        String awayLastThrow = getLastThrowString(awayThrows);
+        
+        // DTOs erstellen
+        LiveScoringMatchDTO matchDTO = LiveScoringMatchDTO.builder()
+                .id(match.getId())
+                .homeTeam(LiveScoringMatchDTO.TeamBasicDTO.builder()
+                        .id(homeTeam.getId())
+                        .name(homeTeam.getName())
+                        .build())
+                .awayTeam(LiveScoringMatchDTO.TeamBasicDTO.builder()
+                        .id(awayTeam.getId())
+                        .name(awayTeam.getName())
+                        .build())
+                .homeScore(match.getHomeSets())
+                .awayScore(match.getAwaySets())
+                .currentSet(currentSet.getSetNo())
+                .currentLeg(currentLeg.getLegNo())
+                .build();
+        
+        LiveScoringLegDTO legDTO = LiveScoringLegDTO.builder()
+                .id(currentLeg.getId())
+                .setNumber(currentSet.getSetNo())
+                .legNumber(currentLeg.getLegNo())
+                .homePlayer(LiveScoringPlayerDTO.builder()
+                        .id(homeMember.getId())
+                        .name(homeMember.getFirstName() + " " + homeMember.getLastName())
+                        .remainingScore(currentLeg.getStartingScore()) // TODO: Calculate from throws
+                        .average(homeAverage)
+                        .lastThrow(homeLastThrow)
+                        .build())
+                .awayPlayer(LiveScoringPlayerDTO.builder()
+                        .id(awayMember.getId())
+                        .name(awayMember.getFirstName() + " " + awayMember.getLastName())
+                        .remainingScore(currentLeg.getStartingScore()) // TODO: Calculate from throws
+                        .average(awayAverage)
+                        .lastThrow(awayLastThrow)
+                        .build())
+                .currentPlayer(determineCurrentPlayer(homeThrows.size(), awayThrows.size()))
+                .build();
+        
+        return LiveScoringResponseDTO.builder()
+                .match(matchDTO)
+                .currentLeg(legDTO)
+                .build();
+    }
+    
+    private Double calculateAverage(List<Throw> throwsList) {
+        if (throwsList.isEmpty()) {
+            return 0.0;
+        }
+        int totalScore = throwsList.stream().mapToInt(Throw::getThrowTotal).sum();
+        return (double) totalScore / throwsList.size();
+    }
+    
+    private String getLastThrowString(List<Throw> throwsList) {
+        if (throwsList.isEmpty()) {
+            return null;
+        }
+        Throw lastThrow = throwsList.get(throwsList.size() - 1);
+        return String.format("%d, %d, %d (%d)",
+                lastThrow.getDart1Score(),
+                lastThrow.getDart2Score(),
+                lastThrow.getDart3Score(),
+                lastThrow.getThrowTotal());
+    }
+    
+    private String determineCurrentPlayer(int homeThrowCount, int awayThrowCount) {
+        return homeThrowCount <= awayThrowCount ? "home" : "away";
     }
 }

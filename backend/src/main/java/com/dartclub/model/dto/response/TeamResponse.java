@@ -27,6 +27,7 @@ public class TeamResponse {
     private String description;
     private String league;
     private String logoUrl;
+    private String color;
     private UUID captainId;
     private String captainName; // Vor- und Nachname des Captains
     private int memberCount;

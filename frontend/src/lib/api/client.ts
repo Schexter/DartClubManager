@@ -27,14 +27,20 @@ export const apiClient: AxiosInstance = axios.create({
 });
 
 /**
- * Request Interceptor - JWT Token automatisch hinzufügen
+ * Request Interceptor - JWT Token + Org-ID automatisch hinzufügen
  */
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem('auth_token');
+    const orgId = localStorage.getItem('current_org_id'); // ⭐ Org-ID aus localStorage
     
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    
+    // ⭐ X-Org-Id Header setzen (für Multi-Tenancy)
+    if (orgId && config.headers) {
+      config.headers['X-Org-Id'] = orgId;
     }
     
     return config;

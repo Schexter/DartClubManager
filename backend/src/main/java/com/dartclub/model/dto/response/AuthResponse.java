@@ -22,7 +22,12 @@ public class AuthResponse {
     
     @Builder.Default
     private String type = "Bearer";
+    
     private UserResponse user;
+    
+    // ⭐ Multi-Tenancy: Aktuelle Organisation
+    private UUID orgId;
+    private String orgName;
 
     @Data
     @NoArgsConstructor
@@ -32,6 +37,7 @@ public class AuthResponse {
         private UUID id;
         private String email;
         private String displayName;
+        private String role;
         private Boolean isActive;
     }
 }

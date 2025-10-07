@@ -16,11 +16,14 @@ import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import {
   fetchMembers,
   deleteMember,
+  updateMember,
   selectMembers,
   selectMembersLoading,
   selectMembersError,
 } from './membersSlice';
+import { selectUser, selectCurrentOrgId } from '../auth/authSlice'; // ⭐ Org-ID Selector
 import type { Member } from '../../lib/api/types';
+import { UserRole } from '../../lib/api/types';
 
 // ========================================
 // COMPONENT
@@ -33,17 +36,23 @@ export function MemberListScreen() {
   const members = useAppSelector(selectMembers);
   const isLoading = useAppSelector(selectMembersLoading);
   const error = useAppSelector(selectMembersError);
+  const currentUser = useAppSelector(selectUser);
+  const currentOrgId = useAppSelector(selectCurrentOrgId); // ⭐ Aktuelle Org-ID
   
   const [searchQuery, setSearchQuery] = useState('');
   const [filterRole, setFilterRole] = useState<string>('ALL');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [memberToDelete, setMemberToDelete] = useState<Member | null>(null);
+  const [editingRoleFor, setEditingRoleFor] = useState<string | null>(null);
+  const [newRole, setNewRole] = useState<UserRole>(UserRole.PLAYER);
 
-  // Load Members on Mount
+  // ⭐ Load Members on Mount AND when Org changes
   useEffect(() => {
-    // Vorerst deaktiviert bis Backend-Endpoint fertig ist
-    // dispatch(fetchMembers());
-  }, [dispatch]);
+    if (currentOrgId) {
+      console.log('🔄 Lade Mitglieder für Organisation:', currentOrgId);
+      dispatch(fetchMembers());
+    }
+  }, [dispatch, currentOrgId]); // ⭐ Re-fetch wenn sich Org ändert
 
   // ========================================
   // FILTERING
@@ -92,6 +101,23 @@ export function MemberListScreen() {
   const handleCancelDelete = () => {
     setShowDeleteModal(false);
     setMemberToDelete(null);
+  };
+
+  const handleEditRole = (member: Member) => {
+    setEditingRoleFor(member.id);
+    setNewRole(member.role);
+  };
+
+  const handleSaveRole = async (memberId: string) => {
+    await dispatch(updateMember({
+      id: memberId,
+      data: { role: newRole }
+    }));
+    setEditingRoleFor(null);
+  };
+
+  const handleCancelEditRole = () => {
+    setEditingRoleFor(null);
   };
 
   // ========================================
@@ -213,39 +239,16 @@ export function MemberListScreen() {
                     {member.firstName[0]}{member.lastName[0]}
                   </div>
 
-                  {/* Info */}
+                  {/* Info - Nur Name anzeigen */}
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      {member.firstName} {member.lastName}
-                    </h3>
-                    <div className="flex items-center space-x-2 text-sm text-gray-600 mt-1">
-                      <span className="font-medium">{member.role}</span>
-                      {member.licenseNo && (
-                        <>
-                          <span>•</span>
-                          <span>Lizenz: {member.licenseNo}</span>
-                        </>
-                      )}
-                      {member.email && (
-                        <>
-                          <span>•</span>
-                          <span>{member.email}</span>
-                        </>
-                      )}
-                    </div>
-                    <div className="flex items-center space-x-2 mt-1">
-                      <span
-                        className={`px-2 py-1 text-xs rounded-full ${
-                          member.status === 'ACTIVE'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}
-                      >
-                        {member.status === 'ACTIVE' ? 'Aktiv' : 'Inaktiv'}
-                      </span>
-                      {member.handedness && (
-                        <span className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded-full">
-                          {member.handedness === 'LEFT' ? '🤚 Links' : '🤚 Rechts'}
+                    <div className="flex items-center space-x-2">
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        {member.firstName} {member.lastName}
+                      </h3>
+                      {/* "Du" Badge für eigenen User */}
+                      {currentUser?.id === member.userId && (
+                        <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full font-medium">
+                          Du
                         </span>
                       )}
                     </div>

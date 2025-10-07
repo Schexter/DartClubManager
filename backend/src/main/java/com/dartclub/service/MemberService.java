@@ -10,6 +10,7 @@ import com.dartclub.model.entity.User;
 import com.dartclub.model.enums.UserRole;
 import com.dartclub.repository.MemberRepository;
 import com.dartclub.repository.MembershipRepository;
+import com.dartclub.repository.TeamRepository;
 import com.dartclub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -33,6 +34,7 @@ public class MemberService {
     private final UserRepository userRepository;
     private final MembershipRepository membershipRepository;
     private final PasswordEncoder passwordEncoder;
+    private final TeamRepository teamRepository;
 
     /**
      * Alle Mitglieder einer Organisation abrufen
@@ -67,6 +69,9 @@ public class MemberService {
                 .licenseNo(request.getLicenseNo())
                 .handedness(request.getHandedness())
                 .notes(request.getNotes())
+                .role(request.getRole() != null ? request.getRole() : "PLAYER")
+                .status("ACTIVE")
+                .joinedAt(java.time.LocalDate.now())
                 .build();
         member = memberRepository.save(member);
         return toResponse(member);
@@ -88,6 +93,7 @@ public class MemberService {
                 .email(request.getEmail())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .displayName(request.getFirstName() + " " + request.getLastName())
+                .organizationId(orgId)
                 .isActive(true)
                 .build();
         user = userRepository.save(user);
@@ -103,7 +109,11 @@ public class MemberService {
                 .birthdate(request.getBirthdate())
                 .licenseNo(request.getLicenseNo())
                 .handedness(request.getHandedness())
+                .playerName(request.getPlayerName())
                 .notes(request.getNotes())
+                .role("PLAYER")
+                .status("ACTIVE")
+                .joinedAt(java.time.LocalDate.now())
                 .build();
         member = memberRepository.save(member);
 
@@ -136,6 +146,8 @@ public class MemberService {
         if (request.getLicenseNo() != null) member.setLicenseNo(request.getLicenseNo());
         if (request.getHandedness() != null) member.setHandedness(request.getHandedness());
         if (request.getNotes() != null) member.setNotes(request.getNotes());
+        if (request.getRole() != null) member.setRole(request.getRole());
+        if (request.getStatus() != null) member.setStatus(request.getStatus());
 
         member = memberRepository.save(member);
         return toResponse(member);
@@ -155,6 +167,16 @@ public class MemberService {
      * Konvertiert Member Entity zu Response DTO
      */
     private MemberResponse toResponse(Member member) {
+        // Teams des Members laden
+        var teams = teamRepository.findByOrgIdAndMemberId(member.getOrgId(), member.getId())
+                .stream()
+                .map(team -> MemberResponse.TeamSummary.builder()
+                        .id(team.getId())
+                        .name(team.getName())
+                        .color(team.getColor())
+                        .build())
+                .collect(Collectors.toList());
+
         return MemberResponse.builder()
                 .id(member.getId())
                 .orgId(member.getOrgId())
@@ -167,6 +189,10 @@ public class MemberService {
                 .licenseNo(member.getLicenseNo())
                 .handedness(member.getHandedness())
                 .notes(member.getNotes())
+                .role(member.getRole())
+                .status(member.getStatus())
+                .joinedAt(member.getJoinedAt())
+                .teams(teams)
                 .createdAt(member.getCreatedAt())
                 .updatedAt(member.getUpdatedAt())
                 .build();

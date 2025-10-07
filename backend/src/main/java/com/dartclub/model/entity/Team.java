@@ -53,6 +53,9 @@ public class Team {
     @Column(name = "logo_url")
     private String logoUrl;
 
+    @Column(name = "color")
+    private String color; // Hex-Farbe für Team-Visualisierung, z.B. "#FF5733"
+
     // Many-to-Many Beziehung zu Mitgliedern
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(

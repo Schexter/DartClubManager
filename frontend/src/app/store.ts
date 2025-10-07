@@ -10,6 +10,8 @@ import membersReducer from '../features/members/membersSlice';
 import teamsReducer from '../features/teams/teamsSlice';
 import matchesReducer from '../features/matches/matchesSlice';
 import organizationReducer from '../features/organization/organizationSlice';
+import eventsReducer from '../features/events/eventsSlice';
+import feesReducer from '../features/fees/feesSlice';
 
 export const store = configureStore({
   reducer: {
@@ -18,6 +20,8 @@ export const store = configureStore({
     teams: teamsReducer,
     matches: matchesReducer,
     organization: organizationReducer,
+    events: eventsReducer,
+    fees: feesReducer,
   },
   // Middleware für besseres Debugging (optional)
   middleware: (getDefaultMiddleware) =>

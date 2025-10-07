@@ -4,9 +4,11 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
@@ -141,5 +143,38 @@ public class JwtTokenProvider {
     private SecretKey getSignInKey() {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(keyBytes);
+    }
+
+    /**
+     * Extrahiert Token aus HTTP Request (Authorization Header)
+     */
+    private String extractTokenFromRequest(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+        return null;
+    }
+
+    /**
+     * Extrahiert User ID aus HTTP Request
+     */
+    public UUID getUserIdFromRequest(HttpServletRequest request) {
+        String token = extractTokenFromRequest(request);
+        if (token != null) {
+            return getUserIdFromToken(token);
+        }
+        return null;
+    }
+
+    /**
+     * Extrahiert Organization ID aus HTTP Request
+     */
+    public UUID getOrgIdFromRequest(HttpServletRequest request) {
+        String token = extractTokenFromRequest(request);
+        if (token != null) {
+            return getOrgIdFromToken(token);
+        }
+        return null;
     }
 }

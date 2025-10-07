@@ -19,12 +19,17 @@ public interface LegRepository extends JpaRepository<Leg, UUID> {
      * Finde alle Legs eines Sets
      */
     List<Leg> findBySetId(UUID setId);
-    
+
+    /**
+     * Finde alle Legs eines Sets sortiert nach Leg-Nummer
+     */
+    List<Leg> findBySetIdOrderByLegNoAsc(UUID setId);
+
     /**
      * Finde Legs nach Spieler (Home oder Away)
      */
     List<Leg> findByHomeMemberIdOrAwayMemberId(UUID homeMemberId, UUID awayMemberId);
-    
+
     /**
      * Finde gewonnene Legs eines Spielers in einem Set
      */

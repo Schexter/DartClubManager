@@ -9,7 +9,7 @@ import java.time.ZonedDateTime;
 import java.util.UUID;
 
 /**
- * Response DTO für Organisation
+ * OrganizationResponse - DTO für Organisation
  *
  * @author Hans Hahn - Alle Rechte vorbehalten
  */
@@ -18,12 +18,12 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrganizationResponse {
-
     private UUID id;
     private String name;
     private String slug;
     private String logoUrl;
     private String primaryColor;
     private String secondaryColor;
+    private String role; // Rolle des Users in dieser Organisation
     private ZonedDateTime createdAt;
 }

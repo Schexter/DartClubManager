@@ -3,8 +3,10 @@
 
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAppDispatch } from '../../app/hooks'
+import { useAppDispatch } from '../../app/hooks'  // ⭐ NEU
 import { organizationService } from '../../lib/api/services'
+import { setCurrentOrg } from '../auth/authSlice'  // ⭐ NEU
+import { setCurrentOrganization } from './organizationSlice'  // ⭐ NEU
 
 const ArrowLeftIcon = () => (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -14,7 +16,7 @@ const ArrowLeftIcon = () => (
 
 export default function CreateOrganizationScreen() {
   const navigate = useNavigate()
-  const dispatch = useAppDispatch()
+  const dispatch = useAppDispatch()  // ⭐ NEU: Redux dispatch
 
   const [formData, setFormData] = useState({
     name: '',
@@ -53,12 +55,16 @@ export default function CreateOrganizationScreen() {
       console.log('Creating organization:', formData)
 
       // API Call to create organization
-      await organizationService.create({
+      const newOrg = await organizationService.create({
         name: formData.name,
         slug: formData.slug,
         primaryColor: formData.primaryColor,
         secondaryColor: formData.secondaryColor
       })
+
+      // ⭐ NEU: Neue Organisation im State setzen
+      dispatch(setCurrentOrganization(newOrg))
+      dispatch(setCurrentOrg(newOrg.id))
 
       // Navigate to dashboard after successful creation with reload
       window.location.href = '/dashboard'

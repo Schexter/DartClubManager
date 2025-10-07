@@ -24,8 +24,8 @@ export function CreateMemberScreen() {
 
   // Form Data
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
+    fullName: '',
+    playerName: '',
     email: '',
     phone: '',
     birthdate: '',
@@ -54,16 +54,27 @@ export function CreateMemberScreen() {
         return;
       }
 
+      // Name in Vor- und Nachname aufteilen
+      const nameParts = formData.fullName.trim().split(' ');
+      if (nameParts.length < 2) {
+        setError('Bitte geben Sie Vor- und Nachnamen ein');
+        return;
+      }
+
+      const firstName = nameParts[0];
+      const lastName = nameParts.slice(1).join(' ');
+
       setIsLoading(true);
       try {
         // API Call zum Erstellen des Members mit User-Account
         await memberService.createWithAccount({
-          firstName: formData.firstName,
-          lastName: formData.lastName,
+          firstName,
+          lastName,
           email: formData.email,
           phone: formData.phone,
           birthdate: formData.birthdate,
           password: formData.password,
+          playerName: formData.playerName || undefined,
         });
 
         navigate('/members');
@@ -159,34 +170,41 @@ export function CreateMemberScreen() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Vorname */}
+              {/* Vollständiger Name */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Vorname *
+                  Name (Vorname Nachname) *
                 </label>
                 <input
                   type="text"
-                  name="firstName"
-                  value={formData.firstName}
+                  name="fullName"
+                  value={formData.fullName}
                   onChange={handleInputChange}
                   required
+                  placeholder="z.B. Max Mustermann"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Bitte Vor- und Nachname mit Leerzeichen eingeben
+                </p>
               </div>
 
-              {/* Nachname */}
+              {/* Spielername (optional) */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nachname *
+                  Spielername (optional)
                 </label>
                 <input
                   type="text"
-                  name="lastName"
-                  value={formData.lastName}
+                  name="playerName"
+                  value={formData.playerName}
                   onChange={handleInputChange}
-                  required
+                  placeholder="z.B. MaxDarts, TheBoss, etc."
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Anzeigename für Matches - kann mehrfach verwendet werden
+                </p>
               </div>
 
               {/* Email */}

@@ -19,7 +19,7 @@ const paddingStyles = {
   lg: 'p-8',
 };
 
-export const Card = React.forwardRef<HTMLDivElement, CardProps>(
+const CardRoot = React.forwardRef<HTMLDivElement, CardProps>(
   ({ children, hover = false, padding = 'md', className = '', ...props }, ref) => {
     return (
       <div
@@ -38,10 +38,10 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
   }
 );
 
-Card.displayName = 'Card';
+CardRoot.displayName = 'Card';
 
 // Sub-components for better semantics
-export const CardHeader: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({
+const CardHeader: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({
   children,
   className = '',
   ...props
@@ -51,7 +51,7 @@ export const CardHeader: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({
   </div>
 );
 
-export const CardTitle: React.FC<React.HTMLAttributes<HTMLHeadingElement>> = ({
+const CardTitle: React.FC<React.HTMLAttributes<HTMLHeadingElement>> = ({
   children,
   className = '',
   ...props
@@ -61,7 +61,7 @@ export const CardTitle: React.FC<React.HTMLAttributes<HTMLHeadingElement>> = ({
   </h3>
 );
 
-export const CardDescription: React.FC<React.HTMLAttributes<HTMLParagraphElement>> = ({
+const CardDescription: React.FC<React.HTMLAttributes<HTMLParagraphElement>> = ({
   children,
   className = '',
   ...props
@@ -71,7 +71,7 @@ export const CardDescription: React.FC<React.HTMLAttributes<HTMLParagraphElement
   </p>
 );
 
-export const CardContent: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({
+const CardContent: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({
   children,
   className = '',
   ...props
@@ -81,7 +81,7 @@ export const CardContent: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({
   </div>
 );
 
-export const CardFooter: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({
+const CardFooter: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({
   children,
   className = '',
   ...props
@@ -90,3 +90,15 @@ export const CardFooter: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({
     {children}
   </div>
 );
+
+// Compound Component Pattern
+export const Card = Object.assign(CardRoot, {
+  Header: CardHeader,
+  Title: CardTitle,
+  Description: CardDescription,
+  Content: CardContent,
+  Footer: CardFooter,
+});
+
+// Named exports for individual use
+export { CardHeader, CardTitle, CardDescription, CardContent, CardFooter };

@@ -44,5 +44,7 @@ public class CreateMemberWithAccountRequest {
 
     private String handedness; // 'left' or 'right'
 
+    private String playerName; // Optional display name for matches
+
     private String notes;
 }

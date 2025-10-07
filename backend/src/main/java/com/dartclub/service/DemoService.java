@@ -37,7 +37,7 @@ public class DemoService {
     /**
      * Erstellt einen vollständigen Demo-Account mit:
      * - Organisation
-     * - Admin-User
+     * - Admin-User + zugehöriger Member-Eintrag ⭐
      * - 5 Beispiel-Mitglieder
      * - 1 Team
      * 
@@ -55,12 +55,17 @@ public class DemoService {
         User user = createDemoUser(org);
         log.info("Demo user created: {} (id: {})", user.getEmail(), user.getId());
 
+        // ⭐ 2.5. Member-Eintrag für Admin-User erstellen (damit er sich selbst sieht!)
+        Member adminMember = createAdminMember(org, user);
+        log.info("Admin member created: {} {} (id: {})", 
+            adminMember.getFirstName(), adminMember.getLastName(), adminMember.getId());
+
         // 3. Beispiel-Mitglieder erstellen
         List<Member> members = createDemoMembers(org);
         log.info("Created {} demo members", members.size());
 
-        // 4. Beispiel-Team erstellen
-        Team team = createDemoTeam(org, members);
+        // 4. Beispiel-Team erstellen (mit Admin als Captain)
+        Team team = createDemoTeam(org, adminMember, members);
         log.info("Demo team created: {} (id: {})", team.getName(), team.getId());
 
         // 5. JWT Token generieren
@@ -100,6 +105,25 @@ public class DemoService {
             .build();
 
         return organizationRepository.save(org);
+    }
+
+    /**
+     * ⭐ Erstellt Member-Eintrag für Admin-User
+     * (Damit der User sich selbst in der Mitgliederliste sieht)
+     */
+    private Member createAdminMember(Organization org, User user) {
+        Member adminMember = Member.builder()
+            .orgId(org.getId())
+            .userId(user.getId()) // ⭐ Verknüpfung zum User!
+            .firstName("Demo")
+            .lastName("Admin")
+            .email(user.getEmail())
+            .handedness("Rechts")
+            .licenseNo("ADMIN-001")
+            .birthdate(LocalDate.of(1990, 1, 1))
+            .build();
+
+        return memberRepository.save(adminMember);
     }
 
     /**
@@ -154,14 +178,14 @@ public class DemoService {
     }
 
     /**
-     * Erstellt Demo-Team mit allen Mitgliedern
+     * Erstellt Demo-Team mit Admin als Captain + allen Mitgliedern
      */
-    private Team createDemoTeam(Organization org, List<Member> members) {
+    private Team createDemoTeam(Organization org, Member adminMember, List<Member> members) {
         Team team = Team.builder()
             .orgId(org.getId())
             .name("Demo Team")
             .season("2024/25")
-            .captainId(members.isEmpty() ? null : members.get(0).getId())
+            .captainId(adminMember.getId()) // ⭐ Admin ist Captain
             .build();
 
         return teamRepository.save(team);

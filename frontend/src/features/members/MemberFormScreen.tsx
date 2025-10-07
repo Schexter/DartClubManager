@@ -21,6 +21,7 @@ import {
   selectMembersError,
   clearCurrentMember,
 } from './membersSlice';
+import { UserRole } from '../../lib/api/types';
 import type { CreateMemberRequest, UpdateMemberRequest } from '../../lib/api/types';
 
 // ========================================
@@ -35,7 +36,7 @@ interface FormData {
   birthdate: string;
   licenseNo: string;
   handedness: 'LEFT' | 'RIGHT' | '';
-  role: 'ADMIN' | 'TRAINER' | 'CAPTAIN' | 'PLAYER';
+  role?: UserRole;
   status: 'ACTIVE' | 'INACTIVE';
 }
 
@@ -66,7 +67,7 @@ export function MemberFormScreen() {
     birthdate: '',
     licenseNo: '',
     handedness: '',
-    role: 'PLAYER',
+    role: UserRole.PLAYER,
     status: 'ACTIVE',
   });
 

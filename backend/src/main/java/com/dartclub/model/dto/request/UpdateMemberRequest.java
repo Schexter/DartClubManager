@@ -36,4 +36,8 @@ public class UpdateMemberRequest {
     private String handedness; // 'left' or 'right'
 
     private String notes;
+
+    private String role; // 'ADMIN', 'TRAINER', 'CAPTAIN', 'PLAYER'
+
+    private String status; // 'ACTIVE', 'INACTIVE'
 }

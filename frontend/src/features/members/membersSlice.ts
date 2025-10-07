@@ -4,7 +4,7 @@
  * @author Hans Hahn - Alle Rechte vorbehalten
  */
 
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { memberService } from '../../lib/api';
 import type { Member, CreateMemberRequest, UpdateMemberRequest } from '../../lib/api/types';
 

@@ -1,39 +1,54 @@
 // DartClub Manager - Dashboard Wrapper
-// Prüft ob User eine Organisation hat
+// Prüft ob User eine Organisation hat und lädt sie in den Redux Store
 // Erstellt von Hans Hahn - Alle Rechte vorbehalten
 
 import { useEffect, useState } from 'react'
-import { useAppSelector, useAppDispatch } from '../../app/hooks'
-import { selectUser } from '../auth/authSlice'
-import { setOrganizations } from '../organization/organizationSlice'
+import { useAppDispatch, useAppSelector } from '../../app/hooks'
+import { fetchMyOrganizations, setCurrentOrganization, selectOrganizations } from '../organization/organizationSlice'
+import { setCurrentOrg } from '../auth/authSlice'  // ⭐ NEU: Import von authSlice
 import OrganizationOnboardingScreen from '../organization/OrganizationOnboardingScreen'
 import { DashboardScreen } from './DashboardScreen'
-import { organizationService } from '../../lib/api/services'
-import type { Organization } from '../../lib/api/types'
 
 export default function DashboardWrapper() {
   const dispatch = useAppDispatch()
-  const user = useAppSelector(selectUser)
-  const [organizations, setLocalOrganizations] = useState<Organization[]>([])
+  const organizations = useAppSelector(selectOrganizations)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const loadOrganizations = async () => {
       try {
-        const orgs = await organizationService.getMyOrganizations()
-        setLocalOrganizations(orgs)
-        dispatch(setOrganizations(orgs))
+        // Lade Organisationen via Redux Thunk
+        const result = await dispatch(fetchMyOrganizations()).unwrap()
+
+        // Versuche gespeicherte Organisation aus localStorage zu laden
+        const savedOrgId = localStorage.getItem('current_org_id')  // ⭐ current_org_id (nicht selectedOrganizationId!)
+        if (savedOrgId && result.length > 0) {
+          const savedOrg = result.find(o => o.id === savedOrgId)
+          if (savedOrg) {
+            dispatch(setCurrentOrganization(savedOrg))
+            dispatch(setCurrentOrg(savedOrg.id))  // ⭐ NEU: Auch im authSlice setzen
+            console.log('Gespeicherte Organisation geladen:', savedOrg.name)
+          } else {
+            // Fallback: Erste Organisation wählen
+            dispatch(setCurrentOrganization(result[0]))
+            dispatch(setCurrentOrg(result[0].id))  // ⭐ NEU: Auch im authSlice setzen
+            console.log('Fallback: Erste Organisation gewählt:', result[0].name)
+          }
+        } else if (result.length > 0) {
+          // Keine gespeicherte Organisation: Erste wählen
+          dispatch(setCurrentOrganization(result[0]))
+          dispatch(setCurrentOrg(result[0].id))  // ⭐ NEU: Auch im authSlice setzen
+          console.log('Erste Organisation gewählt:', result[0].name)
+        }
       } catch (error) {
         console.error('Failed to load organizations:', error)
-        setLocalOrganizations([])
-        dispatch(setOrganizations([]))
       } finally {
         setLoading(false)
       }
     }
 
     loadOrganizations()
-  }, [])
+  }, [dispatch])
 
   if (loading) {
     return (

@@ -280,10 +280,10 @@ const teamsSlice = createSlice({
     // ================== REMOVE MEMBER ==================
     builder.addCase(removeTeamMember.fulfilled, (state, action) => {
       const team = state.teams.find((t) => t.id === action.payload.teamId);
-      if (team) {
+      if (team && team.members) {
         team.members = team.members.filter((m) => m.id !== action.payload.memberId);
       }
-      if (state.currentTeam?.id === action.payload.teamId) {
+      if (state.currentTeam?.id === action.payload.teamId && state.currentTeam.members) {
         state.currentTeam.members = state.currentTeam.members.filter(
           (m) => m.id !== action.payload.memberId
         );

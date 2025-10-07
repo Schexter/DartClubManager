@@ -16,6 +16,7 @@ const API_ENDPOINTS = {
     LOGOUT: '/auth/logout',
     REFRESH: '/auth/refresh',
     ME: '/auth/me',
+    SWITCH_ORGANIZATION: '/auth/switch-organization',
   },
 
   // ========================================
@@ -24,7 +25,7 @@ const API_ENDPOINTS = {
   ORGANIZATIONS: {
     BASE: '/organizations',
     BY_ID: (id: string) => `/organizations/${id}`,
-    MY_ORGANIZATIONS: '/organizations/me',
+    MY_ORGANIZATIONS: '/organizations/my-organizations',
     JOIN: '/organizations/join',
     MEMBERS: (id: string) => `/organizations/${id}/members`,
     TEAMS: (id: string) => `/organizations/${id}/teams`,
@@ -95,11 +96,26 @@ const API_ENDPOINTS = {
   // FEE ENDPOINTS (Beitragsverwaltung)
   // ========================================
   FEES: {
+    // Beitragssätze
     BASE: '/fees',
     BY_ID: (id: string) => `/fees/${id}`,
-    PAYMENTS: (id: string) => `/fees/${id}/payments`,
-    EXPORT: '/fees/export',
-    REMINDERS: '/fees/reminders',
+    DEACTIVATE: (id: string) => `/fees/${id}/deactivate`,
+    
+    // Zuweisungen
+    ASSIGNMENTS: '/fees/assignments',
+    ASSIGNMENT_BY_ID: (id: string) => `/fees/assignments/${id}`,
+    ASSIGNMENTS_BY_MEMBER: (memberId: string) => `/fees/assignments/member/${memberId}`,
+    ASSIGNMENTS_BY_FEE: (feeId: string) => `/fees/${feeId}/assignments`,
+    
+    // Zahlungen
+    PAYMENTS: '/fees/payments',
+    PAYMENT_BY_ID: (id: string) => `/fees/payments/${id}`,
+    PAYMENTS_BY_ASSIGNMENT: (assignmentId: string) => `/fees/payments/assignment/${assignmentId}`,
+    PAYMENTS_BY_MEMBER: (memberId: string) => `/fees/payments/member/${memberId}`,
+    
+    // Status
+    STATUS: '/fees/status',
+    STATUS_BY_MEMBER: (memberId: string) => `/fees/status/member/${memberId}`,
   },
 
   // ========================================

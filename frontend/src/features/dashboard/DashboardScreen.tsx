@@ -2,15 +2,16 @@
  * Dashboard Screen - Echte Daten ohne Mocks
  *
  * Erstellt von Hans Hahn - Alle Rechte vorbehalten
- * Version: 4.1
+ * Version: 4.2 - Fix: Organisation-Wechsel synchronisiert jetzt Redux State
  */
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Card, CardHeader, CardTitle, CardDescription, CardContent, Badge, StatsCard } from '../../components/ui';
 import { AppLayout } from '../../components/layout';
-import { useAppSelector } from '../../hooks/redux';
-import { apiClient } from '../../lib/api/client';
+import { useAppSelector, useAppDispatch } from '../../hooks/redux';
+import { setCurrentOrganization } from '../organization/organizationSlice';
+import { setCurrentOrg } from '../auth/authSlice'; // ⭐ Auth-Slice für X-Org-Id Header
 import type { Organization } from '../../lib/api/types';
 
 interface DashboardScreenProps {
@@ -38,7 +39,7 @@ interface RecentMatch {
 
 export const DashboardScreen: React.FC<DashboardScreenProps> = ({ organizations }) => {
   const navigate = useNavigate();
-  const [selectedOrg, setSelectedOrg] = useState<Organization | null>(organizations[0] || null);
+  const dispatch = useAppDispatch();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentMatches, setRecentMatches] = useState<RecentMatch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -77,6 +78,20 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ organizations 
     }
   };
 
+  // Handler für Organisation-Wechsel
+  const handleOrganizationChange = (org: Organization) => {
+    // Redux State aktualisieren (für UI)
+    dispatch(setCurrentOrganization(org));
+    
+    // ⭐ Org-ID für Multi-Tenancy setzen (für X-Org-Id Header)
+    dispatch(setCurrentOrg(org.id));
+    
+    // ID in localStorage speichern für Persistenz (nicht das ganze Objekt)
+    localStorage.setItem('selectedOrganizationId', org.id);
+    
+    console.log('✅ Organisation gewechselt zu:', org.name, '| ID:', org.id);
+  };
+
   return (
     <AppLayout>
       {/* Main Content */}
@@ -98,9 +113,9 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ organizations 
             {organizations.map((org) => (
               <button
                 key={org.id}
-                onClick={() => setSelectedOrg(org)}
+                onClick={() => handleOrganizationChange(org)}
                 className={`text-left p-6 rounded-xl border-2 transition-all duration-200 hover:shadow-lg ${
-                  selectedOrg?.id === org.id
+                  currentOrganization?.id === org.id
                     ? 'border-green-500 bg-green-50 shadow-md'
                     : 'border-gray-200 bg-white hover:border-green-500 hover:bg-green-50'
                 }`}
@@ -110,7 +125,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ organizations 
                     <h3 className="text-lg font-bold text-gray-900 mb-1">{org.name}</h3>
                     <p className="text-sm text-gray-500">/{org.slug}</p>
                   </div>
-                  {selectedOrg?.id === org.id && (
+                  {currentOrganization?.id === org.id && (
                     <div className="text-green-600">
                       <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />

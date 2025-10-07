@@ -58,8 +58,20 @@ public class Member {
     @Column(name = "handedness")
     private String handedness; // 'left' or 'right'
 
+    @Column(name = "player_name")
+    private String playerName; // Optional display name for matches
+
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
+
+    @Column(name = "role", nullable = false)
+    private String role; // 'ADMIN', 'TRAINER', 'CAPTAIN', 'PLAYER'
+
+    @Column(name = "status", nullable = false)
+    private String status; // 'ACTIVE', 'INACTIVE'
+
+    @Column(name = "joined_at")
+    private LocalDate joinedAt;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private ZonedDateTime createdAt;

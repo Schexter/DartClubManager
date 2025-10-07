@@ -307,7 +307,7 @@ const matchesSlice = createSlice({
     builder.addCase(submitThrow.pending, (state) => {
       state.error = null;
     });
-    builder.addCase(submitThrow.fulfilled, (state) => {
+    builder.addCase(submitThrow.fulfilled, () => {
       // Throw wurde erfolgreich eingetragen
       // Match wird via fetchMatchById neu geladen
     });

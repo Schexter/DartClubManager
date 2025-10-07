@@ -39,4 +39,6 @@ public class CreateMemberRequest {
     private String handedness; // 'left' or 'right'
 
     private String notes;
+
+    private String role; // 'ADMIN', 'TRAINER', 'CAPTAIN', 'PLAYER' - optional, defaults to PLAYER
 }

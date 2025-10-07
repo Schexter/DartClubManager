@@ -21,6 +21,7 @@ import type { LoginRequest, RegisterRequest, AuthResponse, User } from '../../li
 interface AuthState {
   user: User | null;
   token: string | null;
+  currentOrgId: string | null; // ⭐ Aktuell ausgewählte Organisation
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
@@ -33,6 +34,7 @@ interface AuthState {
 const initialState: AuthState = {
   user: null,
   token: localStorage.getItem('auth_token'),
+  currentOrgId: localStorage.getItem('current_org_id'), // ⭐ Aus localStorage laden
   isAuthenticated: !!localStorage.getItem('auth_token'),
   isLoading: false,
   error: null,
@@ -152,13 +154,27 @@ const authSlice = createSlice({
     },
     
     /**
+     * ⭐ Set Current Organization (für Multi-Tenancy)
+     */
+    setCurrentOrg: (state, action: PayloadAction<string | null>) => {
+      state.currentOrgId = action.payload;
+      if (action.payload) {
+        localStorage.setItem('current_org_id', action.payload);
+      } else {
+        localStorage.removeItem('current_org_id');
+      }
+    },
+    
+    /**
      * Manual Logout (Client-Side only, ohne API Call)
      */
     logoutLocal: (state) => {
       state.user = null;
       state.token = null;
+      state.currentOrgId = null;
       state.isAuthenticated = false;
       removeAuthToken();
+      localStorage.removeItem('current_org_id');
     },
   },
   extraReducers: (builder) => {
@@ -173,6 +189,12 @@ const authSlice = createSlice({
       state.user = action.payload.user;
       state.token = action.payload.token;
       state.error = null;
+      
+      // ⭐ Org-ID automatisch setzen (falls vorhanden)
+      if (action.payload.orgId) {
+        state.currentOrgId = action.payload.orgId;
+        localStorage.setItem('current_org_id', action.payload.orgId);
+      }
     });
     builder.addCase(login.rejected, (state, action) => {
       state.isLoading = false;
@@ -191,6 +213,12 @@ const authSlice = createSlice({
       state.user = action.payload.user;
       state.token = action.payload.token;
       state.error = null;
+      
+      // ⭐ Org-ID automatisch setzen (falls vorhanden)
+      if (action.payload.orgId) {
+        state.currentOrgId = action.payload.orgId;
+        localStorage.setItem('current_org_id', action.payload.orgId);
+      }
     });
     builder.addCase(register.rejected, (state, action) => {
       state.isLoading = false;
@@ -207,6 +235,12 @@ const authSlice = createSlice({
       state.isAuthenticated = true;
       state.user = action.payload.user;
       state.token = action.payload.token;
+      
+      // ⭐ Org-ID automatisch setzen (falls vorhanden)
+      if (action.payload.orgId) {
+        state.currentOrgId = action.payload.orgId;
+        localStorage.setItem('current_org_id', action.payload.orgId);
+      }
     });
     builder.addCase(getCurrentUser.rejected, (state) => {
       state.isLoading = false;
@@ -230,7 +264,7 @@ const authSlice = createSlice({
 // EXPORTS
 // ========================================
 
-export const { clearError, logoutLocal } = authSlice.actions;
+export const { clearError, setCurrentOrg, logoutLocal } = authSlice.actions;
 
 export default authSlice.reducer;
 
@@ -240,6 +274,7 @@ export default authSlice.reducer;
 
 export const selectAuth = (state: { auth: AuthState }) => state.auth;
 export const selectUser = (state: { auth: AuthState }) => state.auth.user;
+export const selectCurrentOrgId = (state: { auth: AuthState }) => state.auth.currentOrgId; // ⭐ Neuer Selector
 export const selectIsAuthenticated = (state: { auth: AuthState }) => state.auth.isAuthenticated;
 export const selectAuthLoading = (state: { auth: AuthState }) => state.auth.isLoading;
 export const selectAuthError = (state: { auth: AuthState }) => state.auth.error;

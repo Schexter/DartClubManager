@@ -8,11 +8,19 @@ import CreateOrganizationScreen from './features/organization/CreateOrganization
 import JoinOrganizationScreen from './features/organization/JoinOrganizationScreen';
 import { MemberListScreen, MemberFormScreen, MemberDetailScreen } from './features/members';
 import { CreateMemberScreen } from './features/members/CreateMemberScreen';
-import { TeamListScreen } from './features/teams/TeamListScreen';
+import { TeamListScreen, TeamFormScreen } from './features/teams';
 import MatchListScreen from './features/matches/MatchListScreen';
+import { MatchFormScreen } from './features/matches/MatchFormScreen';
+import { MatchDetailScreen } from './features/matches/MatchDetailScreen';
 import LiveScoringScreen from './features/matches/LiveScoringScreen';
 import { EventListScreen } from './features/events/EventListScreen';
+import { EventFormScreen } from './features/events/EventFormScreen';
+import { EventDetailScreen } from './features/events/EventDetailScreen';
 import { FeeListScreen } from './features/fees/FeeListScreen';
+import { FeeFormScreen } from './features/fees/FeeFormScreen';
+import { FeeAssignmentScreen } from './features/fees/FeeAssignmentScreen';
+import { PaymentRecordScreen } from './features/fees/PaymentRecordScreen';
+import { MemberFeeDetailScreen } from './features/fees/MemberFeeDetailScreen';
 import { StatisticsScreen } from './features/statistics/StatisticsScreen';
 import { SettingsScreen } from './features/settings/SettingsScreen';
 import ImpressumScreen from './features/legal/ImpressumScreen';
@@ -100,23 +108,64 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/teams/new"
+          element={
+            <ProtectedRoute>
+              <TeamFormScreen />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teams/:id/edit"
+          element={
+            <ProtectedRoute>
+              <TeamFormScreen />
+            </ProtectedRoute>
+          }
+        />
         
         {/* Matches */}
-        <Route 
-          path="/matches" 
+        <Route
+          path="/matches"
           element={
             <ProtectedRoute>
               <MatchListScreen />
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/matches/:id/scoring" 
+        <Route
+          path="/matches/new"
+          element={
+            <ProtectedRoute>
+              <MatchFormScreen />
+            </ProtectedRoute>
+          }
+        />
+        {/* Match Detail - MUSS VOR /matches/:id/edit und /matches/:id/scoring kommen! */}
+        <Route
+          path="/matches/:id"
+          element={
+            <ProtectedRoute>
+              <MatchDetailScreen />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/matches/:id/edit"
+          element={
+            <ProtectedRoute>
+              <MatchFormScreen />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/matches/:id/scoring"
           element={
             <ProtectedRoute>
               <LiveScoringScreen />
             </ProtectedRoute>
-          } 
+          }
         />
         
         {/* Events */}
@@ -128,6 +177,30 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/events/new"
+          element={
+            <ProtectedRoute>
+              <EventFormScreen />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/events/:id"
+          element={
+            <ProtectedRoute>
+              <EventDetailScreen />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/events/:id/edit"
+          element={
+            <ProtectedRoute>
+              <EventFormScreen />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Fees */}
         <Route
@@ -135,6 +208,46 @@ function App() {
           element={
             <ProtectedRoute>
               <FeeListScreen />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/fees/create"
+          element={
+            <ProtectedRoute>
+              <FeeFormScreen />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/fees/:id/edit"
+          element={
+            <ProtectedRoute>
+              <FeeFormScreen />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/fees/assign"
+          element={
+            <ProtectedRoute>
+              <FeeAssignmentScreen />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/fees/payment"
+          element={
+            <ProtectedRoute>
+              <PaymentRecordScreen />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/fees/member/:memberId"
+          element={
+            <ProtectedRoute>
+              <MemberFeeDetailScreen />
             </ProtectedRoute>
           }
         />

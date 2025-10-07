@@ -32,7 +32,16 @@ import type {
   Throw,
   PlayerStatistics,
   TeamStatistics,
-  PaginatedResponse,
+  Fee,
+  CreateFeeRequest,
+  UpdateFeeRequest,
+  FeeAssignment,
+  CreateFeeAssignmentRequest,
+  UpdateFeeAssignmentRequest,
+  FeePayment,
+  CreateFeePaymentRequest,
+  UpdateFeePaymentRequest,
+  MemberFeeStatus,
 } from './types';
 
 // ========================================
@@ -131,6 +140,13 @@ export const organizationService = {
   join: async (slug: string): Promise<Organization> => {
     const response = await apiClient.post<Organization>(API_ENDPOINTS.ORGANIZATIONS.JOIN, { slug });
     return response.data;
+  },
+
+  /**
+   * Delete Organization (Admin only)
+   */
+  delete: async (id: string): Promise<void> => {
+    await apiClient.delete(API_ENDPOINTS.ORGANIZATIONS.BY_ID(id));
   },
 };
 
@@ -493,6 +509,191 @@ export const statisticsService = {
     const response = await apiClient.get(API_ENDPOINTS.STATISTICS.EXPORT, {
       responseType: 'blob',
     });
+    return response.data;
+  },
+};
+
+// ========================================
+// FEE SERVICE (Beitragsverwaltung)
+// ========================================
+
+export const feeService = {
+  // ==================== BEITRAGSSÄTZE ====================
+  
+  /**
+   * Get All Fees
+   */
+  getAll: async (activeOnly: boolean = false): Promise<Fee[]> => {
+    const response = await apiClient.get<Fee[]>(API_ENDPOINTS.FEES.BASE, {
+      params: { activeOnly },
+    });
+    return response.data;
+  },
+
+  /**
+   * Get Fee by ID
+   */
+  getById: async (id: string): Promise<Fee> => {
+    const response = await apiClient.get<Fee>(API_ENDPOINTS.FEES.BY_ID(id));
+    return response.data;
+  },
+
+  /**
+   * Create Fee
+   */
+  create: async (data: CreateFeeRequest): Promise<Fee> => {
+    const response = await apiClient.post<Fee>(API_ENDPOINTS.FEES.BASE, data);
+    return response.data;
+  },
+
+  /**
+   * Update Fee
+   */
+  update: async (id: string, data: UpdateFeeRequest): Promise<Fee> => {
+    const response = await apiClient.put<Fee>(API_ENDPOINTS.FEES.BY_ID(id), data);
+    return response.data;
+  },
+
+  /**
+   * Deactivate Fee (Soft Delete)
+   */
+  deactivate: async (id: string): Promise<void> => {
+    await apiClient.delete(API_ENDPOINTS.FEES.DEACTIVATE(id));
+  },
+
+  /**
+   * Delete Fee (Hard Delete)
+   */
+  delete: async (id: string): Promise<void> => {
+    await apiClient.delete(API_ENDPOINTS.FEES.BY_ID(id));
+  },
+
+  // ==================== ZUWEISUNGEN ====================
+
+  /**
+   * Get Member Assignments
+   */
+  getMemberAssignments: async (memberId: string, date?: string): Promise<FeeAssignment[]> => {
+    const response = await apiClient.get<FeeAssignment[]>(
+      API_ENDPOINTS.FEES.ASSIGNMENTS_BY_MEMBER(memberId),
+      { params: { date } }
+    );
+    return response.data;
+  },
+
+  /**
+   * Get Fee Assignments (Members with this fee)
+   */
+  getFeeAssignments: async (feeId: string): Promise<FeeAssignment[]> => {
+    const response = await apiClient.get<FeeAssignment[]>(
+      API_ENDPOINTS.FEES.ASSIGNMENTS_BY_FEE(feeId)
+    );
+    return response.data;
+  },
+
+  /**
+   * Create Assignment
+   */
+  createAssignment: async (data: CreateFeeAssignmentRequest): Promise<FeeAssignment> => {
+    const response = await apiClient.post<FeeAssignment>(
+      API_ENDPOINTS.FEES.ASSIGNMENTS,
+      data
+    );
+    return response.data;
+  },
+
+  /**
+   * Update Assignment
+   */
+  updateAssignment: async (
+    id: string,
+    data: UpdateFeeAssignmentRequest
+  ): Promise<FeeAssignment> => {
+    const response = await apiClient.put<FeeAssignment>(
+      API_ENDPOINTS.FEES.ASSIGNMENT_BY_ID(id),
+      data
+    );
+    return response.data;
+  },
+
+  /**
+   * Deactivate Assignment
+   */
+  deactivateAssignment: async (id: string): Promise<void> => {
+    await apiClient.delete(API_ENDPOINTS.FEES.ASSIGNMENT_BY_ID(id));
+  },
+
+  // ==================== ZAHLUNGEN ====================
+
+  /**
+   * Get Assignment Payments
+   */
+  getAssignmentPayments: async (assignmentId: string): Promise<FeePayment[]> => {
+    const response = await apiClient.get<FeePayment[]>(
+      API_ENDPOINTS.FEES.PAYMENTS_BY_ASSIGNMENT(assignmentId)
+    );
+    return response.data;
+  },
+
+  /**
+   * Get Member Payments
+   */
+  getMemberPayments: async (memberId: string): Promise<FeePayment[]> => {
+    const response = await apiClient.get<FeePayment[]>(
+      API_ENDPOINTS.FEES.PAYMENTS_BY_MEMBER(memberId)
+    );
+    return response.data;
+  },
+
+  /**
+   * Record Payment
+   */
+  recordPayment: async (data: CreateFeePaymentRequest): Promise<FeePayment> => {
+    const response = await apiClient.post<FeePayment>(
+      API_ENDPOINTS.FEES.PAYMENTS,
+      data
+    );
+    return response.data;
+  },
+
+  /**
+   * Update Payment
+   */
+  updatePayment: async (
+    id: string,
+    data: UpdateFeePaymentRequest
+  ): Promise<FeePayment> => {
+    const response = await apiClient.put<FeePayment>(
+      API_ENDPOINTS.FEES.PAYMENT_BY_ID(id),
+      data
+    );
+    return response.data;
+  },
+
+  /**
+   * Delete Payment
+   */
+  deletePayment: async (id: string): Promise<void> => {
+    await apiClient.delete(API_ENDPOINTS.FEES.PAYMENT_BY_ID(id));
+  },
+
+  // ==================== STATUS ÜBERSICHTEN ====================
+
+  /**
+   * Get Fee Status Overview (All Members)
+   */
+  getStatusOverview: async (): Promise<MemberFeeStatus[]> => {
+    const response = await apiClient.get<MemberFeeStatus[]>(API_ENDPOINTS.FEES.STATUS);
+    return response.data;
+  },
+
+  /**
+   * Get Member Fee Status
+   */
+  getMemberStatus: async (memberId: string): Promise<MemberFeeStatus[]> => {
+    const response = await apiClient.get<MemberFeeStatus[]>(
+      API_ENDPOINTS.FEES.STATUS_BY_MEMBER(memberId)
+    );
     return response.data;
   },
 };
