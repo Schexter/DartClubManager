@@ -3,11 +3,13 @@ package com.dartclub.service;
 import com.dartclub.exception.ResourceNotFoundException;
 import com.dartclub.model.dto.request.FeeAssignmentRequest;
 import com.dartclub.model.dto.response.FeeAssignmentResponse;
+import com.dartclub.model.dto.response.FeeResponse;
 import com.dartclub.model.entity.Fee;
 import com.dartclub.model.entity.FeeAssignment;
 import com.dartclub.model.entity.Member;
 import com.dartclub.model.enums.FeeAssignmentStatus;
 import com.dartclub.repository.FeeAssignmentRepository;
+import com.dartclub.repository.FeePaymentRepository;
 import com.dartclub.repository.FeeRepository;
 import com.dartclub.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -33,6 +36,8 @@ public class FeeAssignmentService {
     private final FeeAssignmentRepository feeAssignmentRepository;
     private final FeeRepository feeRepository;
     private final MemberRepository memberRepository;
+    private final FeePaymentRepository feePaymentRepository;
+    private final FeeService feeService;
 
     /**
      * Alle Zuweisungen für ein Mitglied
@@ -47,7 +52,7 @@ public class FeeAssignmentService {
         
         return feeAssignmentRepository.findByMemberId(memberId)
                 .stream()
-                .map(this::toResponse)
+                .map(this::toResponseWithPaymentInfo)
                 .collect(Collectors.toList());
     }
 
@@ -63,7 +68,7 @@ public class FeeAssignmentService {
         
         return feeAssignmentRepository.findActiveFeeAssignmentsForMemberAtDate(memberId, date)
                 .stream()
-                .map(this::toResponse)
+                .map(this::toResponseWithPaymentInfo)
                 .collect(Collectors.toList());
     }
 
@@ -80,7 +85,7 @@ public class FeeAssignmentService {
         
         return feeAssignmentRepository.findActiveAssignmentsWithMembersByFeeId(feeId)
                 .stream()
-                .map(this::toResponse)
+                .map(this::toResponseWithPaymentInfo)
                 .collect(Collectors.toList());
     }
 
@@ -126,7 +131,7 @@ public class FeeAssignmentService {
         assignment.setMember(member);
         assignment.setFee(fee);
         
-        return toResponse(assignment);
+        return toResponseWithPaymentInfo(assignment);
     }
 
     /**
@@ -151,7 +156,7 @@ public class FeeAssignmentService {
         assignment = feeAssignmentRepository.save(assignment);
         log.info("Fee assignment updated: {}", assignment.getId());
         
-        return toResponse(assignment);
+        return toResponseWithPaymentInfo(assignment);
     }
 
     /**
@@ -176,7 +181,7 @@ public class FeeAssignmentService {
     }
 
     /**
-     * Mapping: Entity → Response DTO
+     * Mapping: Entity → Response DTO (ohne Zahlungsinformationen)
      */
     private FeeAssignmentResponse toResponse(FeeAssignment assignment) {
         String memberName = null;
@@ -203,5 +208,119 @@ public class FeeAssignmentService {
                 .createdAt(assignment.getCreatedAt())
                 .updatedAt(assignment.getUpdatedAt())
                 .build();
+    }
+    
+    /**
+     * Mapping: Entity → Response DTO (MIT Zahlungsinformationen)
+     */
+    private FeeAssignmentResponse toResponseWithPaymentInfo(FeeAssignment assignment) {
+        String memberName = null;
+        String feeName = null;
+        FeeResponse feeResponse = null;
+        
+        // Lade Member
+        if (assignment.getMember() != null) {
+            memberName = assignment.getMember().getFullName();
+        }
+        
+        // Lade Fee
+        Fee fee = null;
+        if (assignment.getFee() != null) {
+            fee = assignment.getFee();
+            feeName = fee.getName();
+        } else {
+            // Lade Fee aus DB falls nicht geladen
+            fee = feeRepository.findById(assignment.getFeeId())
+                    .orElse(null);
+            if (fee != null) {
+                feeName = fee.getName();
+                assignment.setFee(fee); // Cache für weitere Verwendung
+            }
+        }
+        
+        // Erstelle FeeResponse
+        if (fee != null) {
+            feeResponse = feeService.toResponse(fee);
+        }
+        
+        // Berechne Zahlungsinformationen
+        BigDecimal totalPaid = feePaymentRepository.sumPaymentsByFeeAssignmentId(assignment.getId());
+        if (totalPaid == null) {
+            totalPaid = BigDecimal.ZERO;
+        }
+        
+        BigDecimal feeAmount = fee != null ? fee.getAmount() : BigDecimal.ZERO;
+        BigDecimal remainingAmount = feeAmount.subtract(totalPaid);
+        
+        // Letzte Zahlung
+        LocalDate lastPaymentDate = feePaymentRepository
+                .findByFeeAssignmentIdOrderByPaymentDateDesc(assignment.getId())
+                .stream()
+                .findFirst()
+                .map(payment -> payment.getPaymentDate())
+                .orElse(null);
+        
+        // Bestimme Zahlungsstatus
+        String paymentStatus;
+        if (remainingAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            paymentStatus = "PAID";
+        } else if (totalPaid.compareTo(BigDecimal.ZERO) > 0) {
+            paymentStatus = "PARTIAL";
+        } else {
+            paymentStatus = "OPEN";
+        }
+        
+        // Überfällig?
+        // Berechne nächstes Fälligkeitsdatum
+        LocalDate nextDueDate = calculateNextDueDate(fee, assignment);
+        if (nextDueDate != null && LocalDate.now().isAfter(nextDueDate) && 
+            remainingAmount.compareTo(BigDecimal.ZERO) > 0) {
+            paymentStatus = "OVERDUE";
+        }
+        
+        return FeeAssignmentResponse.builder()
+                .id(assignment.getId())
+                .memberId(assignment.getMemberId())
+                .memberName(memberName)
+                .feeId(assignment.getFeeId())
+                .feeName(feeName)
+                .fee(feeResponse) // Vollständiges Fee-Objekt
+                .startDate(assignment.getStartDate())
+                .endDate(assignment.getEndDate())
+                .status(assignment.getStatus())
+                .notes(assignment.getNotes())
+                .totalPaid(totalPaid)
+                .remainingAmount(remainingAmount)
+                .lastPaymentDate(lastPaymentDate)
+                .paymentStatus(paymentStatus)
+                .createdAt(assignment.getCreatedAt())
+                .updatedAt(assignment.getUpdatedAt())
+                .build();
+    }
+    
+    /**
+     * Berechne nächstes Fälligkeitsdatum basierend auf Beitragsperiode
+     */
+    private LocalDate calculateNextDueDate(Fee fee, FeeAssignment assignment) {
+        if (fee == null) return null;
+        
+        switch (fee.getPeriod()) {
+            case YEARLY:
+                return LocalDate.of(LocalDate.now().getYear(), 1, 31); // 31. Januar
+            case QUARTERLY:
+                int currentMonth = LocalDate.now().getMonthValue();
+                int quarter = (currentMonth - 1) / 3;
+                int nextQuarterMonth = (quarter + 1) * 3 + 1;
+                if (nextQuarterMonth > 12) {
+                    return LocalDate.of(LocalDate.now().getYear() + 1, 1, 31);
+                }
+                return LocalDate.of(LocalDate.now().getYear(), nextQuarterMonth, 1);
+            case MONTHLY:
+                return LocalDate.now().plusMonths(1).withDayOfMonth(1);
+            case ONCE:
+                return assignment.getStartDate().plusDays(30); // 30 Tage nach Start
+            default:
+                return null;
+        }
     }
 }

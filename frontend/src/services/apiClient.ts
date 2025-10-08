@@ -13,8 +13,8 @@ const apiClient = axios.create({
 // Interceptor hinzufügen, um den JWT-Token und Org-ID bei jeder Anfrage mitzusenden
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
-    const orgId = localStorage.getItem('currentOrgId');
+    const token = localStorage.getItem('auth_token');
+    const orgId = localStorage.getItem('current_org_id');
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;

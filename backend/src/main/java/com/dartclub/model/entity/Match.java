@@ -32,6 +32,19 @@ public class Match {
     @Column(name = "away_team_id")
     private UUID awayTeamId;
 
+    // Einzelspieler-Matches (optional)
+    @Column(name = "home_player_id")
+    private UUID homePlayerId; // Mitglied aus der Org
+
+    @Column(name = "away_player_id")
+    private UUID awayPlayerId; // Mitglied aus der Org
+
+    @Column(name = "home_player_name")
+    private String homePlayerName; // Gastspieler (wenn nicht homePlayerId)
+
+    @Column(name = "away_player_name")
+    private String awayPlayerName; // Gastspieler (wenn nicht awayPlayerId)
+
     @Column(name = "match_date", nullable = false)
     private ZonedDateTime matchDate;
 
@@ -106,5 +119,40 @@ public class Match {
      */
     public boolean isLive() {
         return status == MatchStatus.LIVE;
+    }
+
+    /**
+     * Check if this is a team match (vs individual player match)
+     */
+    public boolean isTeamMatch() {
+        return homeTeamId != null || awayTeamId != null;
+    }
+
+    /**
+     * Check if this is an individual player match
+     */
+    public boolean isPlayerMatch() {
+        return homePlayerId != null || awayPlayerId != null || 
+               homePlayerName != null || awayPlayerName != null;
+    }
+
+    /**
+     * Get display name for home side
+     */
+    @Transient
+    public String getHomeDisplayName() {
+        if (homePlayerName != null) return homePlayerName;
+        if (homePlayerId != null) return "Spieler (ID: " + homePlayerId + ")"; // Wird vom Service aufgelöst
+        return "Heim-Team";
+    }
+
+    /**
+     * Get display name for away side
+     */
+    @Transient
+    public String getAwayDisplayName() {
+        if (awayPlayerName != null) return awayPlayerName;
+        if (awayPlayerId != null) return "Spieler (ID: " + awayPlayerId + ")"; // Wird vom Service aufgelöst
+        return "Auswärts-Team";
     }
 }

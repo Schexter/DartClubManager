@@ -170,10 +170,17 @@ export interface AddTeamMemberRequest {
 
 export interface Match {
   id: string;
+  // Team-Matches
   homeTeamId?: string; // Optional: Matches können ohne Teams erstellt werden
   awayTeamId?: string; // Optional: Matches können ohne Teams erstellt werden
   homeTeam?: Team;
   awayTeam?: Team;
+  // Einzelspieler-Matches
+  homePlayerId?: string; // Mitglied aus der eigenen Org
+  awayPlayerId?: string; // Mitglied aus der eigenen Org
+  homePlayerName?: string; // Gastspieler (wenn nicht homePlayerId)
+  awayPlayerName?: string; // Gastspieler (wenn nicht awayPlayerId)
+  // Match-Details
   matchDate: string;
   venue?: string;
   league?: string;
@@ -181,6 +188,8 @@ export interface Match {
   status: MatchStatus;
   homeSets: number;
   awaySets: number;
+  bestOfSets: number;
+  bestOfLegs: number;
   startingScore: number;
   doubleOut: boolean;
   createdAt: string;
@@ -261,6 +270,48 @@ export interface CreateThrowRequest {
   dart2Segment: number;
   dart3Multiplier: number;
   dart3Segment: number;
+}
+
+// ========================================
+// LIVE SCORING TYPES
+// ========================================
+
+export interface DartInput {
+  multiplier: number;
+  segment: number;
+}
+
+export interface LiveScoringThrowRequest {
+  legId: string;
+  darts: DartInput[];
+}
+
+export interface LiveScoringThrowResponse {
+  throwId: string;
+  throwTotal: number;
+  remainingScore: number;
+  isCheckout: boolean;
+  isBust: boolean;
+  event?: string;
+  legFinished: boolean;
+  leg: LiveScoringLegDTO;
+}
+
+export interface LiveScoringLegDTO {
+  id: string;
+  setNumber: number;
+  legNumber: number;
+  homePlayer: LiveScoringPlayerDTO;
+  awayPlayer: LiveScoringPlayerDTO;
+  currentPlayer: 'home' | 'away';
+}
+
+export interface LiveScoringPlayerDTO {
+  id: string;
+  name: string;
+  remainingScore: number;
+  average: number;
+  lastThrow?: string;
 }
 
 // ========================================
@@ -377,10 +428,16 @@ export interface FeeAssignment {
   memberName?: string;
   feeId: string;
   feeName?: string;
+  fee?: Fee; // Vollständiges Fee-Objekt mit allen Details
   startDate: string;
   endDate?: string;
   status: FeeAssignmentStatus;
   notes?: string;
+  // Zahlungsinformationen
+  totalPaid?: number;
+  remainingAmount?: number;
+  lastPaymentDate?: string;
+  paymentStatus?: 'PAID' | 'PARTIAL' | 'OPEN' | 'OVERDUE';
   createdAt: string;
   updatedAt: string;
 }

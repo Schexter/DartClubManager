@@ -8,7 +8,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useAppDispatch, useAppSelector } from '../../lib/hooks';
+import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { fetchFeeById, createFee, updateFee } from './feesSlice';
 import { AppLayout } from '../../components/layout/AppLayout';
 import { Button, Card } from '../../components/ui';

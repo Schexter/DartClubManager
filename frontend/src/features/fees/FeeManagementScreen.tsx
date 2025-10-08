@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { useAppDispatch, useAppSelector } from '../../lib/hooks';
+import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { fetchFees, fetchStatusOverview, createFee, deleteFee, setSelectedFee } from './feesSlice';
 import { FeePeriod } from '../../lib/api/types';
 

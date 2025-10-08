@@ -99,4 +99,55 @@ Das Problem trat erneut auf - PostgreSQL Container hatte altes Volume mit andere
 
 ---
 
+## [2025-10-08 Aktuelle Zeit] ERROR: Test-Fehler - Test-Konfiguration inkonsistent
+
+**Fehlermeldung:**
+```
+DartAppApplicationTests > contextLoads() FAILED
+java.lang.IllegalStateException at DefaultCacheAwareContextLoaderDelegate.java:180
+Caused by: org.springframework.beans.BeanCreationException
+Caused by: org.springframework.beans.factory.BeanInstantiationException
+Caused by: java.lang.IllegalStateException at Assert.java:101
+```
+
+**Ursache:**
+- Test war für H2 In-Memory Database konfiguriert
+- **ABER:** Projekt nutzt Docker mit PostgreSQL!
+- Test-Strategie war inkonsistent mit Production-Setup
+- H2-Dependency fehlte (und sollte auch nicht hinzugefügt werden)
+
+**Lösung:**
+Tests auf **PostgreSQL mit Testcontainers** umgestellt:
+1. `application-test.properties` auf PostgreSQL geändert
+2. `DartAppApplicationTests.java` mit @Testcontainers annotiert
+3. PostgreSQL-Container wird automatisch gestartet/gestoppt
+4. Testcontainers-Dependencies waren bereits in build.gradle ✅
+
+```java
+@SpringBootTest
+@Testcontainers
+class DartAppApplicationTests {
+    @Container
+    @ServiceConnection
+    static PostgreSQLContainer<?> postgres = 
+        new PostgreSQLContainer<>("postgres:16-alpine");
+}
+```
+
+**Verbesserungen für die Zukunft:**
+- **Konsistente Test-Strategie:** Gleiche DB wie Production (PostgreSQL)
+- **Testcontainers:** Automatische Container-Verwaltung
+- **Docker Desktop:** Muss für Testcontainers laufen
+- **Isolierte Tests:** Jeder Test bekommt frische DB
+
+**Status:** ✅ GELÖST (Pending: Docker Desktop + Build-Test)
+
+**Lessons Learned:**
+1. Tests sollten gleiche DB wie Production nutzen (PostgreSQL)
+2. Testcontainers = Beste Lösung für Integration-Tests
+3. Docker Desktop muss für Testcontainers laufen
+4. Spring Boot 3.1+ hat automatische Testcontainers-Integration
+
+---
+
 **Erstellt von Hans Hahn - Alle Rechte vorbehalten**

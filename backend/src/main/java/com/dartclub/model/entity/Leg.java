@@ -38,6 +38,13 @@ public class Leg {
     @Column(name = "away_member_id")
     private UUID awayMemberId;
 
+    // Namen für Gastspieler (wenn kein Member)
+    @Column(name = "home_player_name")
+    private String homePlayerName;
+
+    @Column(name = "away_player_name")
+    private String awayPlayerName;
+
     @Column(name = "winner_team_id")
     private UUID winnerTeamId;
 
@@ -85,5 +92,23 @@ public class Leg {
      */
     public boolean isFinished() {
         return finishedAt != null && winnerMemberId != null;
+    }
+
+    /**
+     * Get display name for home player
+     */
+    @Transient
+    public String getHomePlayerDisplayName() {
+        if (homePlayerName != null) return homePlayerName;
+        return "Spieler Heim"; // Wird vom Service mit Member-Namen aufgelöst
+    }
+
+    /**
+     * Get display name for away player
+     */
+    @Transient
+    public String getAwayPlayerDisplayName() {
+        if (awayPlayerName != null) return awayPlayerName;
+        return "Spieler Auswärts"; // Wird vom Service mit Member-Namen aufgelöst
     }
 }

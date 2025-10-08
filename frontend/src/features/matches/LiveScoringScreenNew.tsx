@@ -37,32 +37,38 @@ export default function LiveScoringScreenNew() {
   const [currentPlayer, setCurrentPlayer] = useState<0 | 1>(0);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [gameStarted, setGameStarted] = useState(false);
   const [nextMultiplier, setNextMultiplier] = useState<Multiplier | null>(null);
+  const [showFinishDialog, setShowFinishDialog] = useState(false);
 
-  // Lade Match-Daten beim Mount
+  // Lade Match-Daten beim Mount und prüfe Status
   useEffect(() => {
     if (matchId) {
       dispatch(fetchMatchById(matchId));
     }
   }, [matchId, dispatch]);
 
-  // Match starten
-  const handleStartMatch = async () => {
+  // Auto-Start: Lade aktuelles Leg wenn Match LIVE ist
+  useEffect(() => {
+    if (!currentMatch) return;
+
+    // Wenn Match nicht LIVE ist, zurück zu Match-Details
+    if (currentMatch.status !== 'LIVE') {
+      navigate(`/matches/${matchId}`);
+      return;
+    }
+
+    // Lade aktuelles Leg
+    loadCurrentLeg();
+  }, [currentMatch, matchId, navigate]);
+
+  const loadCurrentLeg = async () => {
     if (!matchId) return;
 
     try {
-      setSaving(true);
-      setError(null);
-
-      // Match starten über API → Backend erstellt erstes Set und Leg
-      await matchService.start(matchId);
-
-      // Hole aktuelle Leg-ID aus dem Backend
       const response = await fetch(`http://localhost:8080/api/matches/${matchId}/current-leg`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'X-Org-Id': localStorage.getItem('currentOrgId') || '',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+          'X-Org-Id': localStorage.getItem('current_org_id') || '',
         },
       });
 
@@ -72,15 +78,12 @@ export default function LiveScoringScreenNew() {
 
       const legData = await response.json();
       setCurrentLegId(legData.id);
-      setGameStarted(true);
       setPlayerScores([currentMatch?.startingScore || 301, currentMatch?.startingScore || 301]);
-
     } catch (err: any) {
-      setError(err.message || 'Fehler beim Starten des Matches');
-    } finally {
-      setSaving(false);
+      setError(err.message || 'Fehler beim Laden des Legs');
     }
   };
+
 
   // Dart aufzeichnen
   const recordDart = (multiplier: Multiplier, segment: Segment) => {
@@ -190,6 +193,22 @@ export default function LiveScoringScreenNew() {
     setError(null);
   };
 
+  // Match beenden
+  const handleFinishMatch = async () => {
+    if (!matchId) return;
+
+    try {
+      setSaving(true);
+      await matchService.finalize(matchId);
+      setShowFinishDialog(false);
+      navigate('/matches');
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Fehler beim Beenden des Matches');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const numberKeysTop = [1,2,3,4,5,6,7,8,9,10];
   const numberKeysBottom = [11,12,13,14,15,16,17,18,19,20];
 
@@ -204,52 +223,13 @@ export default function LiveScoringScreenNew() {
     );
   }
 
-  if (!gameStarted) {
+  // Wenn kein Leg geladen, zeige Ladebildschirm
+  if (!currentLegId) {
     return (
-      <div className="min-h-screen p-4 md:p-8 bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="max-w-2xl w-full">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
-            <button
-              onClick={() => navigate("/matches")}
-              className="mb-6 flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              <span>Zurück zur Übersicht</span>
-            </button>
-
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6 text-center">
-              🎯 Live Scoring
-            </h1>
-
-            <div className="space-y-4 mb-6">
-              <div className="p-4 bg-gray-100 dark:bg-gray-700 rounded-md">
-                <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">Heimteam</p>
-                <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {currentMatch?.homeTeam?.name || 'Team 1'}
-                </p>
-              </div>
-              <div className="p-4 bg-gray-100 dark:bg-gray-700 rounded-md">
-                <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">Gastteam</p>
-                <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {currentMatch?.awayTeam?.name || 'Team 2'}
-                </p>
-              </div>
-            </div>
-
-            <button
-              onClick={handleStartMatch}
-              disabled={saving}
-              className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold"
-            >
-              {saving ? 'Wird gestartet...' : 'Match starten'}
-            </button>
-
-            {error && (
-              <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md text-red-600 dark:text-red-400 text-sm">
-                {error}
-              </div>
-            )}
-          </div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Leg wird geladen...</p>
         </div>
       </div>
     );
@@ -270,7 +250,12 @@ export default function LiveScoringScreenNew() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             🎯 Live Scoring
           </h1>
-          <div className="w-20" />
+          <button
+            onClick={() => setShowFinishDialog(true)}
+            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md font-medium transition-colors"
+          >
+            Match beenden
+          </button>
         </div>
 
         {/* Scoreboard */}
@@ -426,6 +411,36 @@ export default function LiveScoringScreenNew() {
           </div>
         )}
       </div>
+
+      {/* Bestätigungsdialog Match beenden */}
+      {showFinishDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+              Match beenden?
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              Möchten Sie das Match wirklich beenden? Der aktuelle Spielstand wird gespeichert und das Match wird als abgeschlossen markiert.
+            </p>
+            <div className="flex space-x-4">
+              <button
+                onClick={() => setShowFinishDialog(false)}
+                disabled={saving}
+                className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-4 py-3 rounded-md font-medium transition-colors disabled:opacity-50"
+              >
+                Abbrechen
+              </button>
+              <button
+                onClick={handleFinishMatch}
+                disabled={saving}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-md font-medium transition-colors disabled:opacity-50"
+              >
+                {saving ? 'Beende...' : 'Ja, beenden'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

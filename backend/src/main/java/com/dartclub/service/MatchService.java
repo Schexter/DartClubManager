@@ -96,92 +96,118 @@ public class MatchService {
     }
 
     /**
-     * Match starten
+     * Match starten (ohne Spieler-Auswahl)
      */
     @Transactional
     public Match startMatch(UUID matchId, UUID orgId) {
+        return startMatch(matchId, orgId, null);
+    }
+
+    /**
+     * Match starten (mit optionaler Spieler-Auswahl)
+     */
+    @Transactional
+    public Match startMatch(UUID matchId, UUID orgId, com.dartclub.model.dto.request.StartMatchRequestDTO request) {
         Match match = getMatchById(matchId, orgId);
-        
+
         if (match.getStatus() != MatchStatus.SCHEDULED) {
             throw new IllegalStateException("Match kann nur gestartet werden wenn Status = SCHEDULED");
         }
-        
+
         match.setStatus(MatchStatus.LIVE);
         match = matchRepository.save(match);
-        
+
         // Erstes Set erstellen
         Set firstSet = createSet(matchId, 1);
-        
-        // Erstes Leg erstellen mit ersten Spielern aus den Teams
-        createFirstLeg(match, firstSet);
-        
+
+        // Erstes Leg erstellen mit Spieler-Auswahl
+        createFirstLeg(match, firstSet, request);
+
         log.info("Match {} gestartet", matchId);
         return match;
     }
     
     /**
-     * Erstes Leg mit Spielern aus Teams erstellen
+     * Erstes Leg mit Spielern aus Teams erstellen (ohne Request-DTO)
      */
     @Transactional
     protected void createFirstLeg(Match match, Set set) {
+        createFirstLeg(match, set, null);
+    }
+
+    /**
+     * Erstes Leg mit Spieler-Auswahl erstellen
+     */
+    @Transactional
+    protected void createFirstLeg(Match match, Set set, com.dartclub.model.dto.request.StartMatchRequestDTO request) {
         Member homePlayer = null;
         Member awayPlayer = null;
 
-        // Versuche Spieler aus den Teams zu holen
-        if (match.getHomeTeamId() != null && match.getAwayTeamId() != null) {
-            Team homeTeam = teamRepository.findById(match.getHomeTeamId()).orElse(null);
-            Team awayTeam = teamRepository.findById(match.getAwayTeamId()).orElse(null);
-
-            if (homeTeam != null && !homeTeam.getMembers().isEmpty()) {
-                homePlayer = homeTeam.getMembers().iterator().next();
+        // Wenn Request mit Spieler-IDs gegeben: Verwende diese
+        if (request != null) {
+            if (request.getHomePlayerId() != null) {
+                homePlayer = memberRepository.findById(request.getHomePlayerId())
+                        .orElseThrow(() -> new IllegalArgumentException("Heimspieler nicht gefunden"));
+            }
+            if (request.getAwayPlayerId() != null) {
+                awayPlayer = memberRepository.findById(request.getAwayPlayerId())
+                        .orElseThrow(() -> new IllegalArgumentException("Auswärtsspieler nicht gefunden"));
             }
 
-            if (awayTeam != null && !awayTeam.getMembers().isEmpty()) {
-                awayPlayer = awayTeam.getMembers().iterator().next();
+            // Gastspieler erstellen falls Name angegeben aber keine ID
+            if (homePlayer == null && request.getHomePlayerName() != null && !request.getHomePlayerName().isBlank()) {
+                homePlayer = createGuestPlayer(match.getOrgId(), request.getHomePlayerName());
+            }
+            if (awayPlayer == null && request.getAwayPlayerName() != null && !request.getAwayPlayerName().isBlank()) {
+                awayPlayer = createGuestPlayer(match.getOrgId(), request.getAwayPlayerName());
             }
         }
 
-        // Fallback: Nimm die ersten beiden Mitglieder der Organisation (inklusive Gastspieler)
+        // Fallback: Automatische Spieler-Auswahl
         if (homePlayer == null || awayPlayer == null) {
-            // Hole ALLE Members der Organisation (status = ACTIVE, inklusive user_id = NULL für Gastspieler)
-            List<Member> members = memberRepository.findByOrgId(match.getOrgId());
+            // Versuche Spieler aus den Teams zu holen
+            if (match.getHomeTeamId() != null && match.getAwayTeamId() != null) {
+                Team homeTeam = teamRepository.findById(match.getHomeTeamId()).orElse(null);
+                Team awayTeam = teamRepository.findById(match.getAwayTeamId()).orElse(null);
 
-            if (members.isEmpty()) {
-                throw new IllegalStateException("Keine Spieler verfügbar. Bitte erstelle mindestens einen Spieler (Mitglied oder Gastspieler).");
+                if (homeTeam != null && !homeTeam.getMembers().isEmpty() && homePlayer == null) {
+                    homePlayer = homeTeam.getMembers().iterator().next();
+                }
+
+                if (awayTeam != null && !awayTeam.getMembers().isEmpty() && awayPlayer == null) {
+                    awayPlayer = awayTeam.getMembers().iterator().next();
+                }
             }
 
-            if (members.size() < 2) {
-                // Wenn nur 1 Spieler vorhanden: Erstelle Dummy-Gastspieler
-                log.warn("Nur 1 Spieler verfügbar. Match wird mit Dummy-Gegner gestartet.");
+            // Fallback: Nimm die ersten beiden Mitglieder der Organisation
+            if (homePlayer == null || awayPlayer == null) {
+                List<Member> members = memberRepository.findByOrgId(match.getOrgId());
 
-                Member dummyPlayer = Member.builder()
-                        .orgId(match.getOrgId())
-                        .firstName("Gegner")
-                        .lastName("(Platzhalter)")
-                        .role("PLAYER")
-                        .status("ACTIVE")
-                        .joinedAt(java.time.LocalDate.now())
-                        .build();
-                dummyPlayer = memberRepository.save(dummyPlayer);
+                if (members.isEmpty()) {
+                    throw new IllegalStateException("Keine Spieler verfügbar. Bitte erstelle mindestens einen Spieler oder gib Gastnamen an.");
+                }
 
-                if (homePlayer == null) {
-                    homePlayer = members.get(0);
-                    awayPlayer = dummyPlayer;
+                if (members.size() < 2) {
+                    log.warn("Nur 1 Spieler verfügbar. Match wird mit Dummy-Gegner gestartet.");
+                    Member dummyPlayer = createGuestPlayer(match.getOrgId(), "Gegner (Platzhalter)");
+
+                    if (homePlayer == null) {
+                        homePlayer = members.get(0);
+                        awayPlayer = dummyPlayer;
+                    } else {
+                        awayPlayer = dummyPlayer;
+                    }
                 } else {
-                    awayPlayer = dummyPlayer;
-                }
-            } else {
-                // Normal: Mindestens 2 Spieler verfügbar
-                if (homePlayer == null) {
-                    homePlayer = members.get(0);
-                }
-                if (awayPlayer == null) {
-                    // Nimm einen anderen Spieler als homePlayer
-                    final UUID homePlayerId = homePlayer.getId();
-                    awayPlayer = members.stream()
-                            .filter(m -> !m.getId().equals(homePlayerId))
-                            .findFirst()
-                            .orElse(members.get(1));
+                    if (homePlayer == null) {
+                        homePlayer = members.get(0);
+                    }
+                    if (awayPlayer == null) {
+                        final UUID homePlayerId = homePlayer.getId();
+                        awayPlayer = members.stream()
+                                .filter(m -> !m.getId().equals(homePlayerId))
+                                .findFirst()
+                                .orElse(members.get(1));
+                    }
                 }
             }
         }
@@ -191,6 +217,26 @@ public class MatchService {
         log.info("Erstes Leg erstellt: {} vs {}",
                 homePlayer.getFirstName() + " " + homePlayer.getLastName(),
                 awayPlayer.getFirstName() + " " + awayPlayer.getLastName());
+    }
+
+    /**
+     * Gastspieler erstellen
+     */
+    private Member createGuestPlayer(UUID orgId, String fullName) {
+        String[] parts = fullName.trim().split("\\s+", 2);
+        String firstName = parts[0];
+        String lastName = parts.length > 1 ? parts[1] : "";
+
+        Member guest = Member.builder()
+                .orgId(orgId)
+                .firstName(firstName)
+                .lastName(lastName)
+                .role("PLAYER")
+                .status("ACTIVE")
+                .joinedAt(java.time.LocalDate.now())
+                .build();
+
+        return memberRepository.save(guest);
     }
 
     /**

@@ -14,7 +14,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '../../components/layout';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
-import { fetchMatches, clearError, Match } from './matchesSlice';
+import { fetchMatches, startMatch, clearError, Match } from './matchesSlice';
 
 export function MatchListScreen() {
   const navigate = useNavigate();
@@ -184,9 +184,17 @@ export function MatchListScreen() {
                   <div>
                     {match.status === 'SCHEDULED' && (
                       <button
-                        onClick={(e) => {
+                        onClick={async (e) => {
                           e.stopPropagation();
-                          navigate(`/matches/${match.id}/scoring`);
+                          try {
+                            // Match-Status auf LIVE setzen
+                            await dispatch(startMatch(match.id)).unwrap();
+                            // Dann zur Live-Scoring-Seite navigieren
+                            navigate(`/matches/${match.id}/scoring`);
+                          } catch (error) {
+                            console.error('Fehler beim Starten des Matches:', error);
+                            // Fehler wird im Redux State gespeichert und oben angezeigt
+                          }
                         }}
                         className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-medium transition-colors"
                       >

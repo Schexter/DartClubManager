@@ -163,7 +163,8 @@ public class MatchController {
     public ResponseEntity<Match> startMatch(
             HttpServletRequest servletRequest,
             @RequestHeader(value = "X-Org-Id", required = false) UUID headerOrgId,
-            @PathVariable UUID id) {
+            @PathVariable UUID id,
+            @RequestBody(required = false) com.dartclub.model.dto.request.StartMatchRequestDTO request) {
 
         UUID orgId = getOrgId(servletRequest, headerOrgId);
         if (orgId == null) {
@@ -172,7 +173,7 @@ public class MatchController {
 
         log.info("POST /api/matches/{}/start - orgId: {}", id, orgId);
 
-        Match match = matchService.startMatch(id, orgId);
+        Match match = matchService.startMatch(id, orgId, request);
         return ResponseEntity.ok(match);
     }
 

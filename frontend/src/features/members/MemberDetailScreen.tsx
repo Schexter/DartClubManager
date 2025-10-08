@@ -63,7 +63,7 @@ export function MemberDetailScreen() {
     return () => {
       dispatch(clearCurrentMember());
     };
-  }, [dispatch, id]);
+  }, [dispatch, id, isAdmin]);
 
   // ========================================
   // HANDLERS
@@ -105,7 +105,8 @@ export function MemberDetailScreen() {
     });
   };
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount?: number) => {
+    if (amount === undefined || amount === null) return '0,00 €';
     return new Intl.NumberFormat('de-DE', {
       style: 'currency',
       currency: 'EUR',
@@ -127,11 +128,15 @@ export function MemberDetailScreen() {
     return handedness === 'LEFT' ? 'Links' : 'Rechts';
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status?: string) => {
     const statusConfig: Record<string, { label: string; className: string }> = {
       PAID: {
         label: 'Bezahlt',
         className: 'bg-green-100 text-green-800',
+      },
+      PARTIAL: {
+        label: 'Teilweise bezahlt',
+        className: 'bg-yellow-100 text-yellow-800',
       },
       OPEN: {
         label: 'Offen',
@@ -143,7 +148,7 @@ export function MemberDetailScreen() {
       },
     };
 
-    const config = statusConfig[status] || statusConfig.OPEN;
+    const config = statusConfig[status || 'OPEN'] || statusConfig.OPEN;
     return (
       <span className={`px-2 py-1 text-xs font-medium rounded-full ${config.className}`}>
         {config.label}
@@ -151,7 +156,8 @@ export function MemberDetailScreen() {
     );
   };
 
-  const getDaysOverdue = (dueDate: string) => {
+  const getDaysOverdue = (dueDate?: string) => {
+    if (!dueDate) return 0;
     const due = new Date(dueDate);
     const today = new Date();
     const diffTime = today.getTime() - due.getTime();
@@ -162,16 +168,16 @@ export function MemberDetailScreen() {
   // Statistiken für Beiträge
   const feeStats = {
     total: assignments.length,
-    paid: assignments.filter(a => a.status === 'PAID').length,
-    open: assignments.filter(a => a.status === 'OPEN').length,
-    overdue: assignments.filter(a => a.status === 'OVERDUE').length,
+    paid: assignments.filter(a => a.paymentStatus === 'PAID').length,
+    open: assignments.filter(a => a.paymentStatus === 'OPEN').length,
+    overdue: assignments.filter(a => a.paymentStatus === 'OVERDUE').length,
     totalAmount: assignments.reduce((sum, a) => sum + (a.fee?.amount || 0), 0),
     paidAmount: assignments
-      .filter(a => a.status === 'PAID')
-      .reduce((sum, a) => sum + (a.fee?.amount || 0), 0),
+      .filter(a => a.paymentStatus === 'PAID')
+      .reduce((sum, a) => sum + (a.totalPaid || 0), 0),
     openAmount: assignments
-      .filter(a => a.status !== 'PAID')
-      .reduce((sum, a) => sum + (a.fee?.amount || 0), 0),
+      .filter(a => a.paymentStatus !== 'PAID')
+      .reduce((sum, a) => sum + (a.remainingAmount || 0), 0),
   };
 
   // ========================================
@@ -425,8 +431,8 @@ export function MemberDetailScreen() {
               {/* Beitragsliste */}
               <div className="space-y-3">
                 {assignments.slice(0, 5).map((assignment) => {
-                  const daysOverdue = assignment.status === 'OVERDUE' 
-                    ? getDaysOverdue(assignment.dueDate) 
+                  const daysOverdue = assignment.paymentStatus === 'OVERDUE' && assignment.lastPaymentDate
+                    ? getDaysOverdue(assignment.lastPaymentDate) 
                     : 0;
 
                   return (
@@ -437,13 +443,13 @@ export function MemberDetailScreen() {
                       <div className="flex-1">
                         <div className="flex items-center space-x-3">
                           <h3 className="font-medium text-gray-900">
-                            {assignment.fee?.name || 'Unbekannter Beitrag'}
+                            {assignment.feeName || 'Unbekannter Beitrag'}
                           </h3>
-                          {getStatusBadge(assignment.status)}
+                          {getStatusBadge(assignment.paymentStatus)}
                         </div>
                         <div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
                           <span>
-                            Fällig: {formatDate(assignment.dueDate)}
+                            Start: {formatDate(assignment.startDate)}
                           </span>
                           {daysOverdue > 0 && (
                             <span className="text-red-600 font-medium">
@@ -454,11 +460,16 @@ export function MemberDetailScreen() {
                       </div>
                       <div className="text-right ml-4">
                         <p className="text-lg font-bold text-gray-900">
-                          {formatCurrency(assignment.fee?.amount || 0)}
+                          {formatCurrency(assignment.fee?.amount)}
                         </p>
-                        {assignment.paidDate && (
+                        {assignment.totalPaid !== undefined && assignment.totalPaid > 0 && (
                           <p className="text-xs text-gray-500">
-                            Bezahlt: {formatDate(assignment.paidDate)}
+                            Bezahlt: {formatCurrency(assignment.totalPaid)}
+                          </p>
+                        )}
+                        {assignment.remainingAmount !== undefined && assignment.remainingAmount > 0 && (
+                          <p className="text-xs text-red-600">
+                            Offen: {formatCurrency(assignment.remainingAmount)}
                           </p>
                         )}
                       </div>

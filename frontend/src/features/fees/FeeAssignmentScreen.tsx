@@ -10,7 +10,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppDispatch, useAppSelector } from '../../lib/hooks';
+import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { fetchFees, createAssignment } from './feesSlice';
 import { fetchMembers } from '../members/membersSlice';
 import { AppLayout } from '../../components/layout/AppLayout';

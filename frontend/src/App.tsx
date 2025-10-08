@@ -12,7 +12,7 @@ import { TeamListScreen, TeamFormScreen } from './features/teams';
 import { MatchListScreen } from './features/matches/MatchListScreen';
 import { MatchFormScreen } from './features/matches/MatchFormScreen';
 import { MatchDetailScreen } from './features/matches/MatchDetailScreen';
-import LiveScoringScreen from './features/matches/LiveScoringScreenNew';
+import LiveScoringScreen from './features/matches/LiveScoringScreen';
 import { EventListScreen } from './features/events/EventListScreen';
 import { EventFormScreen } from './features/events/EventFormScreen';
 import { EventDetailScreen } from './features/events/EventDetailScreen';

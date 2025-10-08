@@ -148,8 +148,9 @@ public class FeeService {
 
     /**
      * Mapping: Entity → Response DTO
+     * PUBLIC für Verwendung in anderen Services (z.B. FeeAssignmentService)
      */
-    private FeeResponse toResponse(Fee fee) {
+    public FeeResponse toResponse(Fee fee) {
         return FeeResponse.builder()
                 .id(fee.getId())
                 .orgId(fee.getOrgId())

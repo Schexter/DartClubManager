@@ -1,19 +1,21 @@
 /**
- * MatchDetailScreen.tsx - Match-Details anzeigen
- * 
+ * MatchDetailScreen.tsx - Match-Details mit Spielerauswahl
+ *
  * Features:
  * - Match-Informationen anzeigen
- * - Teams & Aufstellungen
- * - Match starten Button
- * - Navigation zu Live-Scoring
- * 
+ * - Spieler vor dem Start auswählen
+ * - Mitglieder aus DB oder Gastnamen eingeben
+ * - Match starten mit ausgewählten Spielern
+ *
  * @author Hans Hahn - Alle Rechte vorbehalten
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
-import { fetchMatchById, startMatch, clearCurrentMatch } from './matchesSlice';
+import { fetchMatchById, clearCurrentMatch } from './matchesSlice';
+import { memberService, matchService } from '../../lib/api/services';
+import { Member } from '../../lib/api/types';
 
 export function MatchDetailScreen() {
   const { id } = useParams<{ id: string }>();
@@ -21,23 +23,72 @@ export function MatchDetailScreen() {
   const dispatch = useAppDispatch();
   const { currentMatch, isLoading, error } = useAppSelector(state => state.matches);
 
+  const [members, setMembers] = useState<Member[]>([]);
+  const [showPlayerSelection, setShowPlayerSelection] = useState(false);
+  const [selectedHomePlayer, setSelectedHomePlayer] = useState<string>('');
+  const [selectedAwayPlayer, setSelectedAwayPlayer] = useState<string>('');
+  const [homePlayerName, setHomePlayerName] = useState('');
+  const [awayPlayerName, setAwayPlayerName] = useState('');
+  const [useGuestHome, setUseGuestHome] = useState(false);
+  const [useGuestAway, setUseGuestAway] = useState(false);
+  const [starting, setStarting] = useState(false);
+
   useEffect(() => {
     if (id) {
       dispatch(fetchMatchById(id));
+      loadMembers();
     }
     return () => {
       dispatch(clearCurrentMatch());
     };
   }, [id, dispatch]);
 
+  const loadMembers = async () => {
+    try {
+      const memberList = await memberService.getAll();
+      setMembers(memberList.filter(m => m.status === 'ACTIVE'));
+    } catch (err) {
+      console.error('Fehler beim Laden der Mitglieder:', err);
+    }
+  };
+
   const handleStartMatch = async () => {
     if (!id) return;
-    
+
     try {
-      await dispatch(startMatch(id)).unwrap();
+      setStarting(true);
+
+      const requestBody: any = {};
+
+      // Spielerdaten nur aus dem Dialog übernehmen, wenn er auch genutzt wurde
+      if (showPlayerSelection) {
+        // Heim-Spieler
+        if (useGuestHome && homePlayerName.trim()) {
+          requestBody.homePlayerName = homePlayerName.trim();
+        } else if (selectedHomePlayer) {
+          requestBody.homePlayerId = selectedHomePlayer;
+        }
+
+        // Auswärts-Spieler
+        if (useGuestAway && awayPlayerName.trim()) {
+          requestBody.awayPlayerName = awayPlayerName.trim();
+        } else if (selectedAwayPlayer) {
+          requestBody.awayPlayerId = selectedAwayPlayer;
+        }
+      }
+
+      // Sende API-Aufruf zum Starten des Matches
+      await matchService.start(id, Object.keys(requestBody).length > 0 ? requestBody : undefined);
+      
+      // Navigiere zum Live-Scoring
       navigate(`/matches/${id}/scoring`);
-    } catch (error) {
-      console.error('Fehler beim Starten des Matches:', error);
+
+    } catch (err: any) {
+      console.error('Fehler beim Starten:', err);
+      alert(err.response?.data?.message || 'Fehler beim Starten des Matches');
+    } finally {
+      setStarting(false);
+      setShowPlayerSelection(false); // Dialog nach dem Start schließen
     }
   };
 
@@ -93,10 +144,11 @@ export function MatchDetailScreen() {
             </button>
             {currentMatch.status === 'SCHEDULED' && (
               <button
-                onClick={handleStartMatch}
-                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md font-medium transition-colors"
+                onClick={handleStartMatch} // KORREKTUR: Direkter Start ohne Spielerauswahl
+                disabled={starting}
+                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md font-medium transition-colors disabled:opacity-50"
               >
-                Match starten
+                {starting ? 'Startet...' : 'Schnellstart'}
               </button>
             )}
             {currentMatch.status === 'LIVE' && (
@@ -136,9 +188,9 @@ export function MatchDetailScreen() {
           {/* Teams */}
           <div className="text-center mb-6">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              {currentMatch.homeTeamId ? `Team ${currentMatch.homeTeamId}` : 'Heim'}
+              {(currentMatch as any).homeTeam?.name || 'Heim'}
               {' vs. '}
-              {currentMatch.awayTeamId ? `Team ${currentMatch.awayTeamId}` : 'Auswärts'}
+              {(currentMatch as any).awayTeam?.name || 'Auswärts'}
             </h1>
             {currentMatch.status !== 'SCHEDULED' && (
               <div className="text-4xl font-bold text-blue-600 dark:text-blue-400 mt-4">
@@ -181,7 +233,11 @@ export function MatchDetailScreen() {
                 Match-Typ
               </h3>
               <p className="text-gray-900 dark:text-white">
-                {currentMatch.matchType === 'league' ? 'Ligaspiel' : 'Freundschaftsspiel'}
+                {currentMatch.matchType === 'LEAGUE' ? 'Ligaspiel' :
+                 currentMatch.matchType === 'FRIENDLY' ? 'Freundschaftsspiel' :
+                 currentMatch.matchType === 'CUP' ? 'Pokalspiel' :
+                 currentMatch.matchType === 'PRACTICE' ? 'Training' :
+                 currentMatch.matchType === 'TOURNAMENT' ? 'Turnier' : currentMatch.matchType}
               </p>
             </div>
 
@@ -190,7 +246,7 @@ export function MatchDetailScreen() {
                 Modus
               </h3>
               <p className="text-gray-900 dark:text-white">
-                Best of {currentMatch.bestOfSets} Sets (Best of {currentMatch.bestOfLegs} Legs)
+                Best of {currentMatch.bestOfSets} Sets | Best of {currentMatch.bestOfLegs} Legs
               </p>
             </div>
 
@@ -215,14 +271,133 @@ export function MatchDetailScreen() {
           </button>
           {currentMatch.status === 'SCHEDULED' && (
             <button
-              onClick={handleStartMatch}
-              className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-md font-medium transition-colors"
+              onClick={() => setShowPlayerSelection(true)} // Dieser Button öffnet jetzt den Dialog
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-md font-medium transition-colors"
             >
-              Match jetzt starten
+              Spieler auswählen & Starten
             </button>
           )}
         </div>
       </div>
+
+      {/* Spielerauswahl-Dialog */}
+      {showPlayerSelection && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+                Spieler für das Match festlegen
+              </h2>
+
+              {/* Heim-Spieler */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Heim-Spieler
+                </label>
+                <div className="flex items-center space-x-2 mb-2">
+                  <input
+                    type="checkbox"
+                    id="guestHome"
+                    checked={useGuestHome}
+                    onChange={(e) => setUseGuestHome(e.target.checked)}
+                    className="h-4 w-4"
+                  />
+                  <label htmlFor="guestHome" className="text-sm text-gray-600 dark:text-gray-400">
+                    Gastname eingeben
+                  </label>
+                </div>
+                {useGuestHome ? (
+                  <input
+                    type="text"
+                    value={homePlayerName}
+                    onChange={(e) => setHomePlayerName(e.target.value)}
+                    placeholder="z.B. Max Mustermann"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"
+                  />
+                ) : (
+                  <select
+                    value={selectedHomePlayer}
+                    onChange={(e) => setSelectedHomePlayer(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"
+                  >
+                    <option value="">-- Mitglied auswählen --</option>
+                    {members.map((member) => (
+                      <option key={member.id} value={member.id}>
+                        {member.firstName} {member.lastName}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+
+              {/* Auswärts-Spieler */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Auswärts-Spieler
+                </label>
+                <div className="flex items-center space-x-2 mb-2">
+                  <input
+                    type="checkbox"
+                    id="guestAway"
+                    checked={useGuestAway}
+                    onChange={(e) => setUseGuestAway(e.target.checked)}
+                    className="h-4 w-4"
+                  />
+                  <label htmlFor="guestAway" className="text-sm text-gray-600 dark:text-gray-400">
+                    Gastname eingeben
+                  </label>
+                </div>
+                {useGuestAway ? (
+                  <input
+                    type="text"
+                    value={awayPlayerName}
+                    onChange={(e) => setAwayPlayerName(e.target.value)}
+                    placeholder="z.B. Erika Musterfrau"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"
+                  />
+                ) : (
+                  <select
+                    value={selectedAwayPlayer}
+                    onChange={(e) => setSelectedAwayPlayer(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"
+                  >
+                    <option value="">-- Mitglied auswählen --</option>
+                    {members.map((member) => (
+                      <option key={member.id} value={member.id}>
+                        {member.firstName} {member.lastName}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+
+              {/* Hinweis */}
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3 mb-6">
+                <p className="text-sm text-blue-800 dark:text-blue-200">
+                  ℹ️ Falls keine Spieler ausgewählt werden, verwendet das System automatisch verfügbare Spieler aus den Teams oder der Mitgliederliste.
+                </p>
+              </div>
+
+              {/* Buttons */}
+              <div className="flex space-x-4">
+                <button
+                  onClick={() => setShowPlayerSelection(false)}
+                  className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-4 py-3 rounded-md font-medium transition-colors"
+                >
+                  Abbrechen
+                </button>
+                <button
+                  onClick={handleStartMatch} // Dieser Button startet das Match mit den ausgewählten Spielern
+                  disabled={starting}
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-md font-medium transition-colors disabled:opacity-50"
+                >
+                  {starting ? 'Startet...' : 'Bestätigen & Starten'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

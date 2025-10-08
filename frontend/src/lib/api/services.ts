@@ -42,6 +42,8 @@ import type {
   CreateFeePaymentRequest,
   UpdateFeePaymentRequest,
   MemberFeeStatus,
+  LiveScoringThrowRequest,
+  LiveScoringThrowResponse,
 } from './types';
 
 // ========================================
@@ -375,8 +377,13 @@ export const matchService = {
   /**
    * Start Match (Status → LIVE)
    */
-  start: async (id: string): Promise<Match> => {
-    const response = await apiClient.post<Match>(API_ENDPOINTS.MATCHES.START(id));
+  start: async (id: string, players?: {
+    homePlayerId?: string;
+    awayPlayerId?: string;
+    homePlayerName?: string;
+    awayPlayerName?: string;
+  }): Promise<Match> => {
+    const response = await apiClient.post<Match>(API_ENDPOINTS.MATCHES.START(id), players || {});
     return response.data;
   },
 
@@ -389,10 +396,10 @@ export const matchService = {
   },
 
   /**
-   * Submit Throw
+   * Submit Throw (Live Scoring)
    */
-  submitThrow: async (matchId: string, data: CreateThrowRequest): Promise<Throw> => {
-    const response = await apiClient.post<Throw>(
+  submitThrow: async (matchId: string, data: LiveScoringThrowRequest): Promise<LiveScoringThrowResponse> => {
+    const response = await apiClient.post<LiveScoringThrowResponse>(
       API_ENDPOINTS.MATCHES.THROWS(matchId),
       data
     );

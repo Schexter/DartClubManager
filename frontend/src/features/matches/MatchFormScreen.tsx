@@ -4,7 +4,7 @@
  * Features:
  * - Neues Match anlegen
  * - Match bearbeiten
- * - Teams auswählen
+ * - Teams oder Gastspieler auswählen
  * - Match-Parameter konfigurieren
  * 
  * @author Hans Hahn - Alle Rechte vorbehalten
@@ -14,6 +14,9 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { createMatch, fetchMatchById, clearCurrentMatch } from './matchesSlice';
+import { fetchTeams } from '../teams/teamsSlice';
+
+type OpponentType = 'team' | 'guest';
 
 export function MatchFormScreen() {
   const { id } = useParams<{ id: string }>();
@@ -22,13 +25,15 @@ export function MatchFormScreen() {
   const { currentMatch, isLoading } = useAppSelector(state => state.matches);
   const { teams } = useAppSelector(state => state.teams);
 
+  const [opponentType, setOpponentType] = useState<OpponentType>('team');
   const [formData, setFormData] = useState({
     matchDate: '',
     venue: '',
     league: '',
-    matchType: 'league',
+    matchType: 'LEAGUE',
     homeTeamId: '',
     awayTeamId: '',
+    awayPlayerName: '',
     bestOfSets: 3,
     bestOfLegs: 5,
     startingScore: 501,
@@ -36,6 +41,11 @@ export function MatchFormScreen() {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Teams laden beim Mount
+  useEffect(() => {
+    dispatch(fetchTeams());
+  }, [dispatch]);
 
   useEffect(() => {
     if (id) {
@@ -55,11 +65,19 @@ export function MatchFormScreen() {
         matchType: currentMatch.matchType,
         homeTeamId: currentMatch.homeTeamId || '',
         awayTeamId: currentMatch.awayTeamId || '',
+        awayPlayerName: currentMatch.awayPlayerName || '',
         bestOfSets: currentMatch.bestOfSets,
         bestOfLegs: currentMatch.bestOfLegs,
         startingScore: currentMatch.startingScore,
         doubleOut: currentMatch.doubleOut,
       });
+      
+      // Opponent-Typ ermitteln
+      if (currentMatch.awayPlayerName) {
+        setOpponentType('guest');
+      } else {
+        setOpponentType('team');
+      }
     }
   }, [currentMatch, id]);
 
@@ -72,11 +90,25 @@ export function MatchFormScreen() {
     }));
   };
 
+  const handleOpponentTypeChange = (type: OpponentType) => {
+    setOpponentType(type);
+    // Reset opponent fields
+    setFormData(prev => ({
+      ...prev,
+      awayTeamId: '',
+      awayPlayerName: '',
+    }));
+  };
+
   const validate = () => {
     const newErrors: Record<string, string> = {};
 
     if (!formData.matchDate) {
       newErrors.matchDate = 'Datum & Uhrzeit sind erforderlich';
+    }
+
+    if (opponentType === 'guest' && !formData.awayPlayerName.trim()) {
+      newErrors.awayPlayerName = 'Name des Gastspielers ist erforderlich';
     }
 
     if (formData.bestOfSets < 1) {
@@ -103,7 +135,7 @@ export function MatchFormScreen() {
     }
 
     try {
-      // Prepare data for backend - only include team IDs if they're not empty
+      // Prepare data for backend
       const matchData: any = {
         matchDate: new Date(formData.matchDate).toISOString(),
         venue: formData.venue || null,
@@ -115,12 +147,16 @@ export function MatchFormScreen() {
         doubleOut: formData.doubleOut,
       };
 
-      // Only add team IDs if they are set
+      // Heim-Team (immer eigenes Team)
       if (formData.homeTeamId) {
         matchData.homeTeamId = formData.homeTeamId;
       }
-      if (formData.awayTeamId) {
+
+      // Gegner: Team ODER Gastspieler
+      if (opponentType === 'team' && formData.awayTeamId) {
         matchData.awayTeamId = formData.awayTeamId;
+      } else if (opponentType === 'guest' && formData.awayPlayerName.trim()) {
+        matchData.awayPlayerName = formData.awayPlayerName.trim();
       }
 
       await dispatch(createMatch(matchData)).unwrap();
@@ -177,26 +213,58 @@ export function MatchFormScreen() {
             )}
           </div>
 
-          {/* Teams */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="homeTeamId" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Heim-Team
-              </label>
-              <select
-                id="homeTeamId"
-                name="homeTeamId"
-                value={formData.homeTeamId}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-              >
-                <option value="">-- Kein Team --</option>
-                {teams.map(team => (
-                  <option key={team.id} value={team.id}>{team.name}</option>
-                ))}
-              </select>
-            </div>
+          {/* Heim-Team */}
+          <div>
+            <label htmlFor="homeTeamId" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Heim-Team
+            </label>
+            <select
+              id="homeTeamId"
+              name="homeTeamId"
+              value={formData.homeTeamId}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+            >
+              <option value="">-- Kein Team --</option>
+              {teams.map(team => (
+                <option key={team.id} value={team.id}>{team.name}</option>
+              ))}
+            </select>
+          </div>
 
+          {/* Gegner-Typ Auswahl */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              Gegner-Typ
+            </label>
+            <div className="flex space-x-4">
+              <button
+                type="button"
+                onClick={() => handleOpponentTypeChange('team')}
+                className={`flex-1 px-4 py-3 rounded-md font-medium transition-colors ${
+                  opponentType === 'team'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                }`}
+              >
+                🏠 Vereinsinternes Team
+              </button>
+              <button
+                type="button"
+                onClick={() => handleOpponentTypeChange('guest')}
+                className={`flex-1 px-4 py-3 rounded-md font-medium transition-colors ${
+                  opponentType === 'guest'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                }`}
+              >
+                👤 Gastspieler
+              </button>
+            </div>
+          </div>
+
+          {/* Gegner-Details (je nach Typ) */}
+          {opponentType === 'team' && (
             <div>
               <label htmlFor="awayTeamId" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Auswärts-Team
@@ -214,7 +282,30 @@ export function MatchFormScreen() {
                 ))}
               </select>
             </div>
-          </div>
+          )}
+
+          {opponentType === 'guest' && (
+            <div>
+              <label htmlFor="awayPlayerName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Name des Gastspielers *
+              </label>
+              <input
+                type="text"
+                id="awayPlayerName"
+                name="awayPlayerName"
+                value={formData.awayPlayerName}
+                onChange={handleChange}
+                placeholder="z.B. Max Mustermann"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              />
+              {errors.awayPlayerName && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.awayPlayerName}</p>
+              )}
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Trage den Namen eines Spielers ein, gegen den du spielst (z.B. von einem anderen Verein oder Freund)
+              </p>
+            </div>
+          )}
 
           {/* Spielort & Liga */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -261,8 +352,11 @@ export function MatchFormScreen() {
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
             >
-              <option value="league">Ligaspiel</option>
-              <option value="friendly">Freundschaftsspiel</option>
+              <option value="LEAGUE">Ligaspiel</option>
+              <option value="FRIENDLY">Freundschaftsspiel</option>
+              <option value="CUP">Pokalspiel</option>
+              <option value="PRACTICE">Training</option>
+              <option value="TOURNAMENT">Turnier</option>
             </select>
           </div>
 
